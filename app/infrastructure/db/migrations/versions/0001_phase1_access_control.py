@@ -38,11 +38,17 @@ def timestamps() -> list[sa.Column]:
     ]
 
 
-def enable_workspace_rls(table: str, *, user_column: str | None = None) -> None:
+def enable_workspace_rls(
+    table: str,
+    *,
+    workspace_column: str = "workspace_id",
+    user_column: str | None = None,
+) -> None:
     op.execute(f'ALTER TABLE "{table}" ENABLE ROW LEVEL SECURITY')
     op.execute(f'ALTER TABLE "{table}" FORCE ROW LEVEL SECURITY')
     workspace_clause = (
-        "workspace_id = NULLIF(current_setting('app.workspace_id', true), '')::uuid"
+        f"{workspace_column} = "
+        "NULLIF(current_setting('app.workspace_id', true), '')::uuid"
     )
     if user_column:
         user_clause = f"{user_column} = NULLIF(current_setting('app.user_id', true), '')::uuid"
@@ -277,7 +283,9 @@ def upgrade() -> None:
         "ix_audit_logs_workspace_timestamp", "audit_logs", ["workspace_id", "occurred_at"]
     )
 
-    enable_workspace_rls("workspaces", user_column="personal_owner_user_id")
+    enable_workspace_rls(
+        "workspaces", workspace_column="id", user_column="personal_owner_user_id"
+    )
     enable_workspace_rls("workspace_memberships", user_column="user_id")
     enable_workspace_rls("notification_destinations")
     enable_workspace_rls("workspace_strategies")

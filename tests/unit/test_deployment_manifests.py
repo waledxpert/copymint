@@ -43,3 +43,10 @@ def test_local_queue_uses_persistence_and_noeviction() -> None:
     assert "yes" in queue["command"]
     assert "noeviction" in queue["command"]
     assert queue["volumes"] == ["queue-data:/data"]
+
+
+def test_workspace_rls_uses_the_workspace_primary_key() -> None:
+    migration = (
+        ROOT / "app/infrastructure/db/migrations/versions/0001_phase1_access_control.py"
+    ).read_text(encoding="utf-8")
+    assert '"workspaces", workspace_column="id", user_column="personal_owner_user_id"' in migration

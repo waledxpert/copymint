@@ -16,12 +16,12 @@ jobs:
         image: postgres:16-alpine
         env:
           POSTGRES_DB: copymint_test
-          POSTGRES_USER: copymint
+          POSTGRES_USER: copymint_admin
           POSTGRES_PASSWORD: copymint_test_only
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U copymint -d copymint_test"
+          --health-cmd "pg_isready -U copymint_admin -d copymint_test"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
@@ -51,13 +51,24 @@ jobs:
       - name: Migration smoke test
         env:
           APP_ENV: test
-          DATABASE_URL: postgresql+psycopg://copymint:copymint_test_only@localhost:5432/copymint_test
+          DATABASE_URL: postgresql+psycopg://copymint_admin:copymint_test_only@localhost:5432/copymint_test
         run: uv run alembic upgrade head
+
+      - name: Provision non-superuser test role
+        env:
+          PGPASSWORD: copymint_test_only
+        run: |
+          psql -h localhost -U copymint_admin -d copymint_test -v ON_ERROR_STOP=1 <<'SQL'
+          CREATE ROLE copymint_app LOGIN PASSWORD 'copymint_app_test_only' NOSUPERUSER;
+          GRANT CONNECT ON DATABASE copymint_test TO copymint_app;
+          GRANT USAGE ON SCHEMA public TO copymint_app;
+          GRANT SELECT, INSERT, UPDATE, DELETE, TRUNCATE ON ALL TABLES IN SCHEMA public TO copymint_app;
+          SQL
 
       - name: Test
         env:
           APP_ENV: test
-          DATABASE_URL: postgresql+psycopg://copymint:copymint_test_only@localhost:5432/copymint_test
+          DATABASE_URL: postgresql+psycopg://copymint_app:copymint_app_test_only@localhost:5432/copymint_test
           RUN_DATABASE_TESTS: "1"
         run: uv run pytest
 

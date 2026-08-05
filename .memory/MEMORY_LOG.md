@@ -88,3 +88,24 @@
 - Begin Phase 2 only after that gate, focusing on KMS-backed per-user Ethereum wallet creation with no signing or broadcasting route exposed.
 
 ---
+
+## 2026-08-05 — GitHub Actions migration failure fix
+
+### Project Status & Decisions
+- Investigated failed public GitHub Actions run `31043490194` for commit `a5e46ea`; formatting, lint, and typing passed, while the `Migration smoke test` failed.
+- Kept Phase 1 in `VERIFYING` until the corrected migration and PostgreSQL integration suite pass in GitHub Actions.
+
+### Tech Stack & Tools
+- Used the public GitHub Actions REST API to isolate the failed job and step.
+- Corrected Alembic RLS generation and updated CI to separate the PostgreSQL migration administrator from the non-superuser application test role.
+- Added a regression assertion for the workspace RLS tenant-key mapping.
+
+### Problems Solved / Lessons Learned
+- [Migration undefined column]: `enable_workspace_rls()` assumed every table had `workspace_id`; the `workspaces` table uses `id`, so its policy now explicitly uses `workspace_column="id"`.
+- [Misleading isolation test]: The original CI connection used the PostgreSQL service superuser, which bypasses RLS even with `FORCE ROW LEVEL SECURITY`; migrations now run as `copymint_admin` and integration tests run as `copymint_app NOSUPERUSER`.
+
+### Goals & Next Steps
+- Commit and push the three-file CI fix, then inspect the next GitHub Actions run.
+- If the PostgreSQL integration tests pass, close all remaining Phase 1 exit gates and begin Phase 2.
+
+---
