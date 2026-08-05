@@ -3,7 +3,24 @@
 import asyncio
 from typing import Any
 
+from botocore.exceptions import BotoCoreError, ClientError  # type: ignore[import-untyped]
+
 from app.signer.envelope import GeneratedDataKey
+
+
+class KmsOperationError(RuntimeError):
+    """Sanitized KMS failure safe for service error boundaries."""
+
+
+async def kms_call(method: Any, **values: object) -> dict[str, Any]:
+    try:
+        return await asyncio.to_thread(method, **values)
+    except (BotoCoreError, ClientError) as exc:
+        if isinstance(exc, ClientError):
+            code = str(exc.response.get("Error", {}).get("Code", "ClientError"))
+        else:
+            code = type(exc).__name__
+        raise KmsOperationError(f"AWS KMS operation failed ({code})") from None
 
 
 class AwsKmsDataKeyProvider:
@@ -12,12 +29,12 @@ class AwsKmsDataKeyProvider:
         self._key_arn = key_arn
 
     async def health(self) -> bool:
-        response = await asyncio.to_thread(self._client.describe_key, KeyId=self._key_arn)
+        response = await kms_call(self._client.describe_key, KeyId=self._key_arn)
         metadata = response.get("KeyMetadata", {})
         return bool(metadata.get("Enabled")) and metadata.get("KeyUsage") == "ENCRYPT_DECRYPT"
 
     async def generate_data_key(self, encryption_context: dict[str, str]) -> GeneratedDataKey:
-        response = await asyncio.to_thread(
+        response = await kms_call(
             self._client.generate_data_key,
             KeyId=self._key_arn,
             KeySpec="AES_256",
@@ -33,7 +50,7 @@ class AwsKmsDataKeyProvider:
     async def decrypt_data_key(
         self, ciphertext: bytes, encryption_context: dict[str, str]
     ) -> bytes:
-        response = await asyncio.to_thread(
+        response = await kms_call(
             self._client.decrypt,
             KeyId=self._key_arn,
             CiphertextBlob=ciphertext,

@@ -21,9 +21,10 @@ Prerequisites:
 
 ```bash
 cp .env.example .env
-docker compose up -d postgres queue
+docker compose up -d postgres signer-postgres queue
 uv sync --frozen --group dev
 uv run alembic upgrade head
+uv run alembic -c signer_alembic.ini upgrade head
 uv run uvicorn app.api.main:app --reload
 ```
 
@@ -52,4 +53,5 @@ uv run uvicorn app.signer.api:app --host 0.0.0.0 --port 10000
 
 ## Current phase
 
-Phase 0 foundation. See the checklist in `implementation.md` for authoritative status and release gates.
+Phase 1 is complete and Phase 2 wallet creation is in progress. See `implementation.md` for the
+authoritative status and release gates.

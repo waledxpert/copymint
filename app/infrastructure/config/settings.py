@@ -109,6 +109,9 @@ class SignerSettings(RuntimeSettings):
     signer_auth_secret: SecretStr
     aws_region: str
     aws_kms_key_arn: SecretStr
+    aws_access_key_id: SecretStr | None = None
+    aws_secret_access_key: SecretStr | None = None
+    aws_session_token: SecretStr | None = None
 
     @field_validator("signer_auth_secret")
     @classmethod
@@ -116,6 +119,23 @@ class SignerSettings(RuntimeSettings):
         if len(value.get_secret_value()) < 32:
             raise ValueError("SIGNER_AUTH_SECRET must contain at least 32 characters")
         return value
+
+    @model_validator(mode="after")
+    def static_aws_credentials_are_complete(self) -> Self:
+        if (self.aws_access_key_id is None) != (self.aws_secret_access_key is None):
+            raise ValueError(
+                "AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY must be supplied together"
+            )
+        return self
+
+    def aws_client_credentials(self) -> dict[str, str]:
+        values: dict[str, str] = {}
+        if self.aws_access_key_id is not None and self.aws_secret_access_key is not None:
+            values["aws_access_key_id"] = self.aws_access_key_id.get_secret_value()
+            values["aws_secret_access_key"] = self.aws_secret_access_key.get_secret_value()
+        if self.aws_session_token is not None:
+            values["aws_session_token"] = self.aws_session_token.get_secret_value()
+        return values
 
 
 @lru_cache(maxsize=1)

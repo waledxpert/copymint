@@ -47,7 +47,11 @@ async def test_application_database_role_cannot_connect_to_signer_database() -> 
     if os.getenv("RUN_DATABASE_TESTS") != "1":
         pytest.skip("set RUN_DATABASE_TESTS=1 with isolated test databases")
     application_url = make_url(normalize_database_url(os.environ["DATABASE_URL"]))
-    isolated_url = application_url.set(database="copymint_signer_test")
+    signer_url = make_url(normalize_database_url(os.environ["SIGNER_DATABASE_URL"]))
+    isolated_url = signer_url.set(
+        username=application_url.username,
+        password=application_url.password,
+    )
     engine = create_async_engine(isolated_url)
     try:
         with pytest.raises(DBAPIError):

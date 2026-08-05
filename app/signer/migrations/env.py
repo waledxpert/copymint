@@ -1,6 +1,7 @@
 """Alembic environment for the isolated signer database."""
 
 import asyncio
+import platform
 from logging.config import fileConfig
 
 from alembic import context
@@ -48,7 +49,15 @@ async def run_async_migrations() -> None:
     await connectable.dispose()
 
 
+def run_migrations_online() -> None:
+    if platform.system() == "Windows":
+        with asyncio.Runner(loop_factory=asyncio.SelectorEventLoop) as runner:
+            runner.run(run_async_migrations())
+        return
+    asyncio.run(run_async_migrations())
+
+
 if context.is_offline_mode():
     run_migrations_offline()
 else:
-    asyncio.run(run_async_migrations())
+    run_migrations_online()

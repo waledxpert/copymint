@@ -742,15 +742,16 @@ Tasks:
 
 Exit gate:
 
-- [ ] Two-user isolation suite proves no cross-user reads or writes.
+- [x] Two-user isolation suite proves no cross-user reads or writes.
 - [x] Duplicate `/start` and webhook deliveries have one effect.
 - [x] Forwarded or replayed callbacks fail.
 - [x] Group-chat privileged commands fail.
-- [ ] Revoked users lose access immediately.
-- [ ] Audit events identify actor, action, result and correlation ID.
+- [x] Revoked users lose access immediately.
+- [x] Audit events identify actor, action, result and correlation ID.
 
-Implementation is complete locally. The remaining unchecked gates are PostgreSQL-backed CI
-verification cases; Docker/PostgreSQL is unavailable in the current workstation environment.
+Phase 1 completed in GitHub Actions run `31047635556` for commit `9ea2ff3`. Both migration stacks,
+the non-superuser PostgreSQL isolation suite, secret scan, dependency audit, and production
+container build passed.
 
 ### Phase 2 — Wallet creation without transaction execution
 
@@ -771,18 +772,21 @@ Tasks:
 
 Exit gate:
 
-- [ ] A user sees only their own wallet addresses.
+- [x] A user sees only their own wallet addresses.
 - [x] Repeated creation requests return the same result.
 - [ ] No key plaintext appears in DB, Telegram, logs, traces or error output.
 - [x] Restored key derives the expected address.
 - [x] Signer refuses a cross-workspace key reference.
-- [ ] Custody/recovery notice is approved.
+- [x] Custody/recovery notice is owner-approved; legal review remains a launch gate.
 
 Implementation is active. Unit and HTTP boundary tests cover envelope encryption, exact address
 recovery, authenticated/replay-protected signer calls, idempotency, wallet limits, Telegram
 confirmation, and a hard-locked signing endpoint. PostgreSQL isolation suites and both migration
-stacks are configured for CI. The remaining phase gate requires a real non-production AWS KMS and
-signer-database restore drill plus owner approval of `docs/custody-and-recovery-notice.md`.
+stacks pass in GitHub Actions and against separate local Docker PostgreSQL services. The remaining
+technical gate requires a real non-production AWS KMS and signer-database restore drill. The first
+live attempt reached AWS but was denied because the drill IAM identity lacked `kms:DescribeKey` on
+the selected key. The custody notice is owner-approved; legal review remains required before users
+may fund wallets.
 
 ### Phase 3 — Historical Ethereum intelligence
 
@@ -1035,7 +1039,8 @@ Do not implement or enable these as shortcuts during Release 1. Before manual ex
 The following decisions are intentionally not guessed. They must be resolved through ADRs before their dependent gates:
 
 - [x] Managed KMS/HSM provider for signer encryption/custody: AWS KMS envelope encryption.
-- [ ] User recovery/export policy outside Telegram.
+- [x] User recovery/export policy outside Telegram: account recovery and encrypted keystore export
+  after separate identity verification; never deliver key material through Telegram.
 - [x] Maximum execution wallets per workspace: configurable, with a beta default of one.
 - [ ] Exact Chainstack plan with archive and debug/trace access.
 - [ ] Secondary/failover Ethereum RPC provider for production resilience.
@@ -1044,7 +1049,7 @@ The following decisions are intentionally not guessed. They must be resolved thr
 - [ ] Simulation evidence method available through the selected Chainstack node.
 - [ ] Historical trace retention policy and storage cost ceiling.
 - [ ] Initial invitation volume and per-user scan quotas.
-- [ ] Legal/custody notice shown before wallet creation or funding.
+- [x] Custody notice is shown before wallet creation; legal review remains required before funding.
 
 None of these blocks repository foundation or read-only intelligence work. KMS/recovery blocks production wallet creation; trace/simulation capability blocks paper-mode completion.
 
@@ -1075,7 +1080,7 @@ Current status:
 | Phase | Status |
 |---|---|
 | Phase 0 — Foundation | `COMPLETE` |
-| Phase 1 — Access and isolation | `VERIFYING` |
+| Phase 1 — Access and isolation | `COMPLETE` |
 | Phase 2 — Wallet creation | `IN_PROGRESS` |
 | Phase 3 — Historical intelligence | `NOT_STARTED` |
 | Phase 4 — Analytics | `NOT_STARTED` |

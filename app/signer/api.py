@@ -87,7 +87,11 @@ def create_runtime(settings: SignerSettings) -> SignerRuntime:
         pool_pre_ping=True,
     )
     sessions = async_sessionmaker(engine, expire_on_commit=False)
-    kms_client = boto3.client("kms", region_name=settings.aws_region)
+    kms_client = boto3.client(
+        "kms",
+        region_name=settings.aws_region,
+        **settings.aws_client_credentials(),
+    )
     kms = AwsKmsDataKeyProvider(kms_client, key_arn=settings.aws_kms_key_arn.get_secret_value())
     return SignerRuntime(
         wallet_service=SignerWalletService(

@@ -20,8 +20,21 @@ trail. The encryption context is integrity metadata, not a secret.
 - Confirm the target is non-production for drills.
 - Record the signer database backup identifier, KMS key ARN, application environment, chain ID,
   and change-ticket/correlation ID. Never record plaintext keys or decrypted data keys.
-- Ensure the operator can restore PostgreSQL and call only `kms:Decrypt`, `kms:DescribeKey`, and
-  the minimum database operations required for the drill.
+- Ensure the operator can restore PostgreSQL and call only `kms:GenerateDataKey`, `kms:Decrypt`,
+  `kms:DescribeKey`, and the minimum database operations required for the drill.
+
+An identity policy for the drill should scope these actions to the single non-production key:
+
+```json
+{
+  "Effect": "Allow",
+  "Action": ["kms:DescribeKey", "kms:GenerateDataKey", "kms:Decrypt"],
+  "Resource": "<non-production-kms-key-arn>"
+}
+```
+
+The KMS key policy must also allow the drill identity. Do not use `Resource: "*"` or grant
+administrative KMS permissions merely to make the drill pass.
 
 ## Restore procedure
 

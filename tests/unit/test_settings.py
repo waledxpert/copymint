@@ -63,6 +63,8 @@ def test_process_settings_enforce_least_privilege_fields() -> None:
     assert "chainstack_ethereum_http_url" not in ApiSettings.model_fields
     assert "telegram_bot_token" not in SignerSettings.model_fields
     assert "chainstack_ethereum_http_url" not in SignerSettings.model_fields
+    assert "aws_access_key_id" not in ApiSettings.model_fields
+    assert "aws_access_key_id" not in WorkerSettings.model_fields
 
 
 def test_signer_secret_must_be_long() -> None:
@@ -73,3 +75,28 @@ def test_signer_secret_must_be_long() -> None:
             aws_region="eu-west-1",
             aws_kms_key_arn="arn:aws:kms:eu-west-1:000000000000:key/example",
         )
+
+
+def test_signer_static_aws_credentials_must_be_complete_and_remain_secret() -> None:
+    values = {
+        "signer_database_url": "postgresql://signer:password@localhost/copymint",
+        "signer_auth_secret": "s" * 32,
+        "aws_region": "eu-west-1",
+        "aws_kms_key_arn": "arn:aws:kms:eu-west-1:000000000000:key/example",
+    }
+    with pytest.raises(ValidationError, match="must be supplied together"):
+        SignerSettings(
+            **values,
+            aws_access_key_id="development-access-key",
+            aws_secret_access_key=None,
+        )
+    settings = SignerSettings(
+        **values,
+        aws_access_key_id="development-access-key",
+        aws_secret_access_key="development-secret-key",
+    )
+    assert settings.aws_client_credentials() == {
+        "aws_access_key_id": "development-access-key",
+        "aws_secret_access_key": "development-secret-key",
+    }
+    assert "development-secret-key" not in repr(settings)

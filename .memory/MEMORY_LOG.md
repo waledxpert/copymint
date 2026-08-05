@@ -138,3 +138,54 @@
 - After CI evidence passes, close the remaining Phase 1 and eligible Phase 2 exit gates in `implementation.md`.
 
 ---
+
+## 2026-08-05 — Green CI and local Docker isolation verification
+
+### Project Status & Decisions
+- Confirmed pushed commit `9ea2ff3` and GitHub Actions run `31047635556` completed successfully across formatting, lint, typing, both migrations, non-superuser tests, secret scanning, dependency auditing, and the production container build.
+- Closed every Phase 1 exit gate and changed Phase 1 from `VERIFYING` to `COMPLETE` in `implementation.md`.
+- Kept Phase 2 `IN_PROGRESS`; its remaining external gates are a real non-production AWS KMS/database restore drill and owner approval of the custody/recovery notice.
+
+### Tech Stack & Tools
+- Used Docker Desktop 4.85.0 / Engine 29.6.2 to run PostgreSQL 16 Alpine and Redis 7 Alpine locally.
+- Split local application and signer persistence into physically separate PostgreSQL services, volumes, databases, credentials, and host ports in `compose.yaml`.
+- Ran both Alembic stacks and all PostgreSQL-backed tests locally with non-superuser runtime roles.
+- Added cross-platform selector-loop handling for Windows Alembic/pytest async psycopg connections.
+
+### Problems Solved / Lessons Learned
+- [Docker executable missing from inherited PATH]: Located the per-user Docker Desktop installation and temporarily added its `resources/bin` directory so the CLI and credential helper could run.
+- [Local signer isolation mismatch]: Replaced the shared local PostgreSQL database with a dedicated `signer-postgres` service on port 5433 and its own persistent volume.
+- [Windows psycopg failure]: The default Proactor loop caused `Psycopg cannot use the 'ProactorEventLoop'`; Alembic and pytest now select `asyncio.SelectorEventLoop` on Windows.
+- [Isolation test assumed one PostgreSQL host]: Updated the negative signer-connection test to combine application credentials with the configured signer host/database, so it works with both CI's logical separation and Docker's physical separation.
+
+### Goals & Next Steps
+- Push the local Docker/Windows portability batch and verify the next GitHub Actions run remains green.
+- Provision a non-production AWS KMS key and isolated signer database, then execute and record the restore drill from `docs/runbooks/signer-backup-and-restore.md`.
+- Obtain owner approval of `docs/custody-and-recovery-notice.md` and decide the out-of-band recovery/export policy before allowing wallet funding.
+
+---
+
+## 2026-08-05 — Recovery policy approval and live KMS drill attempt
+
+### Project Status & Decisions
+- Recorded owner approval of the custody notice and selected two future out-of-band options: account recovery and encrypted Ethereum keystore export.
+- Kept both recovery operations disabled during the paper release; Telegram may never carry private keys, keystore files, passwords, KMS payloads, or recovery download links.
+- Attempted the first live non-production AWS KMS drill. AWS credentials loaded correctly, but the configured IAM identity was denied `kms:DescribeKey` on the selected test key, so the restore gate remains open.
+
+### Tech Stack & Tools
+- Added `docs/wallet-recovery-and-export-policy.md` with identity verification, two-person export approval, signer-only processing, encrypted expiring artifacts, separate password delivery, audit, and incident-pause controls.
+- Added `scripts/signer_restore_drill.py` for repeatable KMS health, wallet creation, idempotency, address restoration, and cross-workspace rejection checks.
+- Added signer-only static AWS credential settings so ignored local `.env` credentials are passed explicitly to boto3 while remaining absent from API and worker settings.
+- Added sanitized KMS exception handling and regression coverage so AWS account, identity, key ARN, and provider messages do not escape through service errors.
+
+### Problems Solved / Lessons Learned
+- [Local `.env` credentials not visible to boto3]: Pydantic read the file, but boto3's provider chain did not; signer settings now pass an optional complete access-key pair explicitly.
+- [AWS exception metadata exposure]: Raw `ClientError` text included account and key identifiers; `KmsOperationError` now retains only the safe provider error code and suppresses the original exception chain.
+- [Incomplete drill permissions]: The IAM/key policies must allow `kms:DescribeKey`, `kms:GenerateDataKey`, and `kms:Decrypt` for exactly the non-production key.
+
+### Goals & Next Steps
+- Grant the dedicated drill IAM identity the three scoped KMS actions and ensure the KMS key policy permits that identity.
+- Rerun `scripts/signer_restore_drill.py create`, restore the signer database backup into isolation, and run its `verify` command against the restored copy.
+- Push this policy, drill tooling, and KMS error-sanitization batch after the full quality suite remains green.
+
+---

@@ -50,6 +50,19 @@ def test_local_queue_uses_persistence_and_noeviction() -> None:
     assert queue["volumes"] == ["queue-data:/data"]
 
 
+def test_local_signer_database_is_physically_separate() -> None:
+    compose = load_yaml("compose.yaml")
+    app_database = compose["services"]["postgres"]
+    signer_database = compose["services"]["signer-postgres"]
+    assert app_database["ports"] == ["5432:5432"]
+    assert signer_database["ports"] == ["5433:5432"]
+    assert app_database["volumes"] == ["postgres-data:/var/lib/postgresql/data"]
+    assert signer_database["volumes"] == ["signer-postgres-data:/var/lib/postgresql/data"]
+    assert (
+        app_database["environment"]["POSTGRES_DB"] != signer_database["environment"]["POSTGRES_DB"]
+    )
+
+
 def test_workspace_rls_uses_the_workspace_primary_key() -> None:
     migration = (
         ROOT / "app/infrastructure/db/migrations/versions/0001_phase1_access_control.py"

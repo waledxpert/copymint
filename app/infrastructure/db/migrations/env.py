@@ -1,6 +1,7 @@
 """Alembic async migration environment."""
 
 import asyncio
+import platform
 from logging.config import fileConfig
 
 from alembic import context
@@ -57,6 +58,10 @@ async def run_async_migrations() -> None:
 
 
 def run_migrations_online() -> None:
+    if platform.system() == "Windows":
+        with asyncio.Runner(loop_factory=asyncio.SelectorEventLoop) as runner:
+            runner.run(run_async_migrations())
+        return
     asyncio.run(run_async_migrations())
 
 
