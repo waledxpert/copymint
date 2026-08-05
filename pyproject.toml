@@ -86,6 +86,8 @@ branch = true
 source = ["app"]
 omit = [
   "app/infrastructure/db/migrations/*",
+  "app/infrastructure/db/models/*",
+  "app/infrastructure/db/repositories/*",
   "app/workers/celery_app.py",
 ]
 

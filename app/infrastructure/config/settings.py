@@ -46,6 +46,8 @@ class ApiSettings(DatabaseSettings):
     signer_auth_secret: SecretStr
     ethereum_chain_id: Literal[1] = 1
     max_execution_wallets_per_workspace: int = Field(default=1, ge=1, le=100)
+    telegram_user_rate_limit_per_minute: int = Field(default=30, ge=1, le=600)
+    workspace_rate_limit_per_minute: int = Field(default=120, ge=1, le=5000)
 
     @field_validator("telegram_platform_owner_ids")
     @classmethod
@@ -68,6 +70,8 @@ class ApiSettings(DatabaseSettings):
             **super().safe_runtime_context(),
             "ethereum_chain_id": self.ethereum_chain_id,
             "max_execution_wallets_per_workspace": self.max_execution_wallets_per_workspace,
+            "telegram_user_rate_limit_per_minute": self.telegram_user_rate_limit_per_minute,
+            "workspace_rate_limit_per_minute": self.workspace_rate_limit_per_minute,
         }
 
 

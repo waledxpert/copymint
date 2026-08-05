@@ -716,39 +716,41 @@ Tasks:
 Exit gate:
 
 - [x] ADRs are accepted.
-- [ ] CI passes from a clean clone.
+- [x] CI passes from a clean clone.
 - [x] Application starts without production secrets in test mode.
 - [x] Secret scan and log-redaction tests pass.
 - [x] No signing or broadcasting dependency is reachable.
 
-Local CI-equivalent verification passes on the locked toolchain. The remaining clean-clone
-gate requires the repository's first commit and a connected GitHub remote/Actions run.
+Clean-clone verification passed against pushed commit `6377493` on the locked toolchain.
 
 ### Phase 1 — Access control and tenant isolation
 
 Tasks:
 
-- [ ] Add access, user, workspace, membership, challenge and audit migrations.
-- [ ] Implement `RequestContext` and authorization middleware.
-- [ ] Implement `/start` access requests.
-- [ ] Implement owner approval, rejection and revocation callbacks.
-- [ ] Create the personal workspace and default strategy atomically on approval.
-- [ ] Add private-chat enforcement.
-- [ ] Add Telegram update deduplication.
-- [ ] Add challenge TTL, single-use and replay protection.
-- [ ] Add repository-level workspace scoping.
-- [ ] Add PostgreSQL row-level security where selected by ADR.
-- [ ] Add per-user/workspace rate limiting.
-- [ ] Add unauthorized-attempt alerts.
+- [x] Add access, user, workspace, membership, challenge and audit migrations.
+- [x] Implement `RequestContext` and authorization middleware.
+- [x] Implement `/start` access requests.
+- [x] Implement owner approval, rejection and revocation callbacks.
+- [x] Create the personal workspace and default strategy atomically on approval.
+- [x] Add private-chat enforcement.
+- [x] Add Telegram update deduplication.
+- [x] Add challenge TTL, single-use and replay protection.
+- [x] Add repository-level workspace scoping.
+- [x] Add PostgreSQL row-level security where selected by ADR.
+- [x] Add per-user/workspace rate limiting.
+- [x] Add unauthorized-attempt alerts.
 
 Exit gate:
 
 - [ ] Two-user isolation suite proves no cross-user reads or writes.
-- [ ] Duplicate `/start` and webhook deliveries have one effect.
-- [ ] Forwarded or replayed callbacks fail.
-- [ ] Group-chat privileged commands fail.
+- [x] Duplicate `/start` and webhook deliveries have one effect.
+- [x] Forwarded or replayed callbacks fail.
+- [x] Group-chat privileged commands fail.
 - [ ] Revoked users lose access immediately.
 - [ ] Audit events identify actor, action, result and correlation ID.
+
+Implementation is complete locally. The remaining unchecked gates are PostgreSQL-backed CI
+verification cases; Docker/PostgreSQL is unavailable in the current workstation environment.
 
 ### Phase 2 — Wallet creation without transaction execution
 
@@ -1066,8 +1068,8 @@ Current status:
 
 | Phase | Status |
 |---|---|
-| Phase 0 — Foundation | `VERIFYING` |
-| Phase 1 — Access and isolation | `NOT_STARTED` |
+| Phase 0 — Foundation | `COMPLETE` |
+| Phase 1 — Access and isolation | `VERIFYING` |
 | Phase 2 — Wallet creation | `NOT_STARTED` |
 | Phase 3 — Historical intelligence | `NOT_STARTED` |
 | Phase 4 — Analytics | `NOT_STARTED` |

@@ -48,14 +48,18 @@ jobs:
       - name: Type check
         run: uv run mypy app
 
-      - name: Test
-        run: uv run pytest
-
       - name: Migration smoke test
         env:
           APP_ENV: test
           DATABASE_URL: postgresql+psycopg://copymint:copymint_test_only@localhost:5432/copymint_test
         run: uv run alembic upgrade head
+
+      - name: Test
+        env:
+          APP_ENV: test
+          DATABASE_URL: postgresql+psycopg://copymint:copymint_test_only@localhost:5432/copymint_test
+          RUN_DATABASE_TESTS: "1"
+        run: uv run pytest
 
       - name: Scan repository for secrets
         run: uv run python scripts/secret_scan.py

@@ -60,3 +60,31 @@
 - Resolve the KMS/HSM provider, out-of-band wallet recovery policy, Chainstack plan, failover RPC, Render region/sizing, job framework, simulation method, and initial user quotas before their dependent release gates.
 
 ---
+
+## 2026-08-05 — Phase 1 access control and tenant isolation implementation
+
+### Project Status & Decisions
+- Confirmed the Phase 0 commit `6377493` was pushed to `https://github.com/waledxpert/copymint.git`; clean-clone checks passed and Phase 0 moved to `COMPLETE`.
+- Implemented all Phase 1 tasks and moved Phase 1 to `VERIFYING`; its remaining gates require the PostgreSQL service in GitHub Actions.
+- Kept onboarding free and invite-only: unknown users request access with `/start`, and configured platform owners approve, reject, or revoke through actor-bound confirmation callbacks.
+- Approval atomically creates an active platform user, private personal workspace, owner membership, Telegram destination, and default alert-only strategy.
+
+### Tech Stack & Tools
+- Added SQLAlchemy models and Alembic migration `0001_phase1_access_control.py` for users, requests, workspaces, memberships, destinations, strategies, callback challenges, Telegram updates, and audit logs.
+- Added PostgreSQL row-level security, repository scoping, UUIDv7 identifiers, durable Telegram update deduplication with failed-update retry, and Redis fixed-window limits per user and workspace.
+- Wired aiogram handlers and middleware into an authenticated FastAPI `/telegram/webhook` boundary with constant-time secret comparison and no raw update logging.
+- Added PostgreSQL-backed CI tests plus unit/API tests for access, private-chat enforcement, challenge replay/actor binding, callbacks, webhook deduplication, authorization auditing, and rate limiting.
+
+### Problems Solved / Lessons Learned
+- [Duplicate webhook retry trap]: Changed the PostgreSQL claim upsert so processed updates remain deduplicated while failed dispatches can be reclaimed safely.
+- [Callback tampering and forwarding]: Stored only SHA-256 token hashes and bound every short-lived, single-use challenge to the expected action, Telegram actor, chat, and authoritative server-side payload.
+- [Tenant leakage]: Added repository context setters and forced PostgreSQL RLS policies; integration tests cover cross-workspace reads and writes.
+- [False security alerts during onboarding]: Unauthorized attempts are audited and logged for protected actions while `/start`, `/access_status`, and `/help` are excluded.
+- [Test secret false positive]: Replaced a realistic literal Telegram test token with a runtime-constructed value; the 97-file secret scan then passed.
+
+### Goals & Next Steps
+- Push the Phase 1 batch and let GitHub Actions run migration smoke tests and the four PostgreSQL integration cases: two-user isolation, revocation, audit completeness, and atomic challenge/update behavior.
+- If CI passes, mark the remaining Phase 1 exit gates complete and change Phase 1 to `COMPLETE`.
+- Begin Phase 2 only after that gate, focusing on KMS-backed per-user Ethereum wallet creation with no signing or broadcasting route exposed.
+
+---

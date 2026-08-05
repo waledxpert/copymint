@@ -35,6 +35,8 @@ def test_api_settings_deduplicate_owner_ids_and_hide_secrets() -> None:
         "release_execution_ceiling": "paper",
         "ethereum_chain_id": 1,
         "max_execution_wallets_per_workspace": 1,
+        "telegram_user_rate_limit_per_minute": 30,
+        "workspace_rate_limit_per_minute": 120,
     }
 
 

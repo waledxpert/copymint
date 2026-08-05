@@ -1,0 +1,17 @@
+"""SQLAlchemy repository adapters."""
+
+from app.infrastructure.db.repositories.access import (
+    SqlAlchemyAccessRepository,
+    SqlAlchemySecurityAudit,
+)
+from app.infrastructure.db.repositories.challenges import SqlAlchemyChallengeRepository
+from app.infrastructure.db.repositories.telegram_updates import (
+    SqlAlchemyTelegramUpdateRepository,
+)
+
+__all__ = [
+    "SqlAlchemyAccessRepository",
+    "SqlAlchemyChallengeRepository",
+    "SqlAlchemySecurityAudit",
+    "SqlAlchemyTelegramUpdateRepository",
+]

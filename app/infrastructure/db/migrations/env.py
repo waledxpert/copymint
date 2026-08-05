@@ -9,6 +9,7 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from app.infrastructure.config import get_database_settings
+from app.infrastructure.db import models as _models  # noqa: F401
 from app.infrastructure.db.base import Base
 from app.infrastructure.db.session import normalize_database_url
 

@@ -107,6 +107,40 @@ class PlatformRole(StrEnum):
     SIGNER = "signer"
 
 
+class WorkspaceStatus(StrEnum):
+    ACTIVE = "active"
+    SUSPENDED = "suspended"
+    CLOSED = "closed"
+
+
+class MembershipStatus(StrEnum):
+    ACTIVE = "active"
+    REVOKED = "revoked"
+
+
+class WorkspaceRole(StrEnum):
+    OWNER = "workspace_owner"
+
+
+class ChallengeAction(StrEnum):
+    APPROVE_ACCESS = "approve_access"
+    REJECT_ACCESS = "reject_access"
+    REVOKE_ACCESS = "revoke_access"
+
+
+class TelegramUpdateStatus(StrEnum):
+    RECEIVED = "received"
+    PROCESSED = "processed"
+    FAILED = "failed"
+
+
+class ActorType(StrEnum):
+    TELEGRAM_USER = "telegram_user"
+    SERVICE = "service"
+    SIGNER = "signer"
+    SYSTEM = "system"
+
+
 class SimulationEvidenceLevel(StrEnum):
     VERIFIED = "verified"
     PARTIAL = "partial"
