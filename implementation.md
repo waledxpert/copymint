@@ -792,29 +792,36 @@ legal review remains required before users may fund wallets.
 
 Tasks:
 
-- [ ] Add chain, collection, scan, evidence and mint-event migrations.
-- [ ] Implement Chainstack provider interface and startup chain-ID check.
-- [ ] Implement collection validation with `eth_getCode`.
-- [ ] Implement deployment-block resolver and confidence metadata.
+- [x] Add chain, collection, scan, evidence and mint-event migrations.
+- [x] Implement Chainstack provider interface and startup chain-ID check.
+- [x] Implement collection validation with `eth_getCode`.
+- [x] Implement deployment-block resolver and confidence metadata.
 - [ ] Implement proxy metadata history.
-- [ ] Implement ERC-721 decoder.
-- [ ] Implement ERC-1155 single/batch decoder.
-- [ ] Implement ERC-2309 decoder and range policy.
-- [ ] Implement adaptive block scanner.
-- [ ] Make event persistence and checkpoint advancement atomic.
+- [x] Implement ERC-721 decoder.
+- [x] Implement ERC-1155 single/batch decoder.
+- [x] Implement ERC-2309 decoder and range policy.
+- [x] Implement adaptive block scanner.
+- [x] Make event persistence and checkpoint advancement atomic.
 - [ ] Add transaction, receipt and trace enrichment.
 - [ ] Implement identity roles, confidence and reason codes.
 - [ ] Implement mint route and classification reason codes.
 - [ ] Add `/add_collection`, `/scan` and `/collections`.
 - [ ] Add progress and quality-warning notifications.
 
+Development provider evidence on 2026-08-06 confirms chain ID, safe/finalized tags,
+historical code, bounded logs, transaction/receipt reads, and WSS subscriptions. The endpoint
+accepts 10-block log ranges but rejects 50-block ranges with HTTP 403, so scanning shrinks this
+response adaptively. `debug_traceTransaction` is HTTP 403 and remains an external capability gate
+for trace-dependent enrichment and paper simulation; see
+`docs/runbooks/evidence/2026-08-06-chainstack-capability.md`.
+
 Exit gate:
 
 - [ ] Golden fixture counts match expected mint events.
 - [ ] Worker termination resumes without missing or duplicating events.
-- [ ] ERC-1155 batch sub-index keys are deterministic.
-- [ ] Provider range errors shrink and retry safely.
-- [ ] Re-scans are idempotent.
+- [x] ERC-1155 batch sub-index keys are deterministic.
+- [x] Provider range errors shrink and retry safely.
+- [x] Re-scans are idempotent.
 - [ ] Low-confidence identities are stored as unknown rather than guessed.
 
 ### Phase 4 — Overlap analytics and watchlists
@@ -1082,7 +1089,7 @@ Current status:
 | Phase 0 — Foundation | `COMPLETE` |
 | Phase 1 — Access and isolation | `COMPLETE` |
 | Phase 2 — Wallet creation | `COMPLETE` |
-| Phase 3 — Historical intelligence | `NOT_STARTED` |
+| Phase 3 — Historical intelligence | `IN_PROGRESS` |
 | Phase 4 — Analytics | `NOT_STARTED` |
 | Phase 5 — Live monitoring | `NOT_STARTED` |
 | Phase 6 — Paper mode | `NOT_STARTED` |

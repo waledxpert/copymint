@@ -12,14 +12,32 @@ from app.infrastructure.db.models.access import (
     WorkspaceMembership,
     WorkspaceStrategy,
 )
+from app.infrastructure.db.models.ethereum import (
+    Chain,
+    ChainCursor,
+    Collection,
+    CollectionImplementation,
+    MintEvent,
+    RawEvidence,
+    ScanCheckpoint,
+    ScanJob,
+)
 
 __all__ = [
     "AccessRequest",
     "AuditLog",
     "CallbackChallenge",
+    "Chain",
+    "ChainCursor",
+    "Collection",
+    "CollectionImplementation",
     "ExecutionWallet",
+    "MintEvent",
     "NotificationDestination",
     "PlatformUser",
+    "RawEvidence",
+    "ScanCheckpoint",
+    "ScanJob",
     "TelegramUpdate",
     "Workspace",
     "WorkspaceMembership",

@@ -152,3 +152,39 @@ class SimulationEvidenceLevel(StrEnum):
     PARTIAL = "partial"
     INCONCLUSIVE = "inconclusive"
     FAILED = "failed"
+
+
+class CollectionScanStatus(StrEnum):
+    PENDING = "pending"
+    SCANNING = "scanning"
+    COMPLETE = "complete"
+    FAILED = "failed"
+    QUALITY_WARNING = "quality_warning"
+
+
+class ScanJobStatus(StrEnum):
+    QUEUED = "queued"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
+
+
+class EvidenceKind(StrEnum):
+    BLOCK = "block"
+    LOG = "log"
+    TRANSACTION = "transaction"
+    RECEIPT = "receipt"
+    TRACE = "trace"
+
+
+class EvidenceRetentionStatus(StrEnum):
+    ACTIVE = "active"
+    ARCHIVED = "archived"
+    EXPIRED = "expired"
+
+
+class DeploymentConfidence(StrEnum):
+    EXACT = "exact"
+    BOUNDED = "bounded"
+    UNKNOWN = "unknown"

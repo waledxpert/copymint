@@ -213,3 +213,64 @@
 - Begin Phase 3 with Ethereum chain, collection, scan, evidence, and mint-event migrations plus the Chainstack provider contract.
 
 ---
+
+## 2026-08-06 — Phase 3 Ethereum intelligence foundation
+
+### Project Status & Decisions
+- Confirmed GitHub Actions run `31054947241` passed for Phase 2 completion commit `abb38af`.
+- Began Phase 3 and moved it to `IN_PROGRESS`; completed the foundational schema, collection validation, deployment resolution, standard mint decoders, and adaptive range planner.
+- Preserved global on-chain data as shared immutable evidence rather than workspace-owned data.
+
+### Tech Stack & Tools
+- Added migration `6014276fbd67_phase3_ethereum_intelligence_foundation.py` and SQLAlchemy models for chains, collections, proxy implementation intervals, scan jobs/checkpoints, chain cursors, raw evidence, and mint events.
+- Seeded Ethereum mainnet as EIP-155 chain ID 1 and enforced event provenance, confidence, quantity, address normalization, and idempotency constraints.
+- Added a PostgreSQL trigger that rejects updates or deletes of raw evidence.
+- Added a credential-safe JSON-RPC provider, mainnet verification, `eth_getCode` collection validation, finalized deployment-block binary search, and classified range errors.
+- Added strict ERC-721, ERC-1155 single/batch, and bounded ERC-2309 decoders with deterministic batch/range sub-indexes.
+- Added an adaptive scanner that shrinks provider-rejected ranges and commits successful ranges without gaps.
+
+### Problems Solved / Lessons Learned
+- [Alembic autogenerate false positives]: Removed unrelated legacy check-constraint drops/recreations from the generated migration before validation.
+- [Draft migration downgrade]: Made the raw-evidence function drop tolerant of a local database that had applied the pre-trigger draft, then passed a complete downgrade/upgrade cycle.
+- [Provider credential leakage]: Provider errors expose only classified codes and never include the configured Chainstack URL.
+- [Unbounded ERC-2309 expansion]: Added a configurable maximum range and explicit rejection instead of risking uncontrolled row generation.
+
+### Goals & Next Steps
+- Add atomic raw-evidence/mint-event persistence with checkpoint advancement and idempotent re-scan behavior.
+- Implement transaction, receipt, and trace enrichment plus conservative identity/route/classification reason codes.
+- Add proxy implementation discovery and workspace-private collection registration with `/add_collection`, `/scan`, and `/collections`.
+- Obtain development Chainstack HTTPS/WSS endpoints to run the live provider capability gate and populate reviewed golden fixtures.
+
+---
+
+Continuation: atomic batch persistence was completed in the same session after this entry was
+written. `SqlAlchemyMintBatchConsumer` now inserts immutable raw log evidence, idempotent decoded
+mint events, and the monotonic scan checkpoint in one PostgreSQL transaction. Replaying the same
+batch produces one evidence row, one mint event, and one checkpoint; the full suite passed with 86
+tests and 83.42% coverage.
+
+---
+
+## 2026-08-06 — Live Chainstack range and enrichment capability verification
+
+### Project Status & Decisions
+- Verified the configured development Chainstack HTTPS/WSS credentials without recording either endpoint or credential.
+- Confirmed chain ID 1, safe/finalized tags, historical contract code, 10-block log retrieval, finalized transaction/receipt reads, and WSS new-head subscribe/unsubscribe behavior.
+- Kept trace-dependent enrichment and paper simulation gated because `debug_traceTransaction` returned sanitized HTTP 403.
+
+### Tech Stack & Tools
+- Added `scripts/chainstack_capability_probe.py` with process-minimal `EthereumProviderSettings`, sanitized validation/provider failures, and a partial-result exit when trace is unavailable.
+- Hardened `JsonRpcEvmProvider` so an `eth_getLogs` HTTP 403 is classified as a transient splittable-range response; the adaptive scanner can reduce the request until accepted.
+- Recorded the live, credential-free capability result in `docs/runbooks/evidence/2026-08-06-chainstack-capability.md` and linked it from Phase 3 in `implementation.md`.
+
+### Problems Solved / Lessons Learned
+- [Probe unnecessarily required DB and Redis]: Introduced focused provider settings so the diagnostic needs only Chainstack HTTP/WSS values and chain ID.
+- [Documented versus effective log range]: The endpoint accepted one-block and 10-block ranges but rejected 50, 99, 100, and 1,001 blocks with HTTP 403; range sizing must remain adaptive.
+- [Trace method unavailable]: Transaction and receipt calls passed, while `debug_traceTransaction` returned HTTP 403; a compatible paid/global Chainstack node or equivalent trace-capable provider is required for that gate.
+
+### Goals & Next Steps
+- Enable debug/trace access on a compatible development Chainstack deployment, then rerun the capability probe.
+- Complete trace-aware identity, route, and classification persistence while preserving unknown values whenever evidence is missing.
+- Add proxy implementation history and workspace-private `/add_collection`, `/scan`, and `/collections` flows.
+
+---

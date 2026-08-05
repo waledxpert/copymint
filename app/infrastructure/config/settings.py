@@ -35,6 +35,14 @@ class DatabaseSettings(RuntimeSettings):
     database_url: SecretStr
 
 
+class EthereumProviderSettings(RuntimeSettings):
+    """Ethereum provider settings for credential-safe diagnostic tools."""
+
+    chainstack_ethereum_http_url: SecretStr
+    chainstack_ethereum_wss_url: SecretStr
+    ethereum_chain_id: Literal[1] = 1
+
+
 class ApiSettings(DatabaseSettings):
     """Public bot/API settings. Contains no Chainstack or KMS credentials."""
 
@@ -141,6 +149,11 @@ class SignerSettings(RuntimeSettings):
 @lru_cache(maxsize=1)
 def get_api_settings() -> ApiSettings:
     return ApiSettings()
+
+
+@lru_cache(maxsize=1)
+def get_ethereum_provider_settings() -> EthereumProviderSettings:
+    return EthereumProviderSettings()
 
 
 @lru_cache(maxsize=1)

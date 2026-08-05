@@ -38,7 +38,9 @@ async def database_sessions(
     database_engine: AsyncEngine,
 ) -> AsyncIterator[async_sessionmaker[AsyncSession]]:
     tables = (
-        "audit_logs, execution_wallets, telegram_updates, callback_challenges, "
+        "mint_events, scan_checkpoints, scan_jobs, collection_implementations, raw_evidence, "
+        "chain_cursors, collections, audit_logs, execution_wallets, telegram_updates, "
+        "callback_challenges, "
         "workspace_strategies, "
         "notification_destinations, workspace_memberships, workspaces, access_requests, "
         "platform_users"

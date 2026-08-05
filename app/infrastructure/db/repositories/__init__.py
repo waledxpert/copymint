@@ -5,6 +5,7 @@ from app.infrastructure.db.repositories.access import (
     SqlAlchemySecurityAudit,
 )
 from app.infrastructure.db.repositories.challenges import SqlAlchemyChallengeRepository
+from app.infrastructure.db.repositories.ethereum import SqlAlchemyMintBatchConsumer
 from app.infrastructure.db.repositories.telegram_updates import (
     SqlAlchemyTelegramUpdateRepository,
 )
@@ -13,6 +14,7 @@ from app.infrastructure.db.repositories.wallets import SqlAlchemyWalletRepositor
 __all__ = [
     "SqlAlchemyAccessRepository",
     "SqlAlchemyChallengeRepository",
+    "SqlAlchemyMintBatchConsumer",
     "SqlAlchemySecurityAudit",
     "SqlAlchemyTelegramUpdateRepository",
     "SqlAlchemyWalletRepository",

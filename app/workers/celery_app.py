@@ -3,6 +3,7 @@
 from celery import Celery
 
 from app.infrastructure.config import WorkerSettings, get_worker_settings
+from app.workers import provider_guard as _provider_guard  # noqa: F401
 
 
 def create_celery_app(settings: WorkerSettings | None = None) -> Celery:
