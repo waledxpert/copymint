@@ -109,3 +109,32 @@
 - If the PostgreSQL integration tests pass, close all remaining Phase 1 exit gates and begin Phase 2.
 
 ---
+
+## 2026-08-05 — Phase 2 encrypted wallet creation
+
+### Project Status & Decisions
+- Moved Phase 2 to `IN_PROGRESS` and implemented its signer, application wallet, Telegram, balance-refresh, deployment, and test foundations without enabling transaction execution.
+- Selected AWS KMS envelope encryption with AES-256-GCM; the application database stores only the checksummed Ethereum address and opaque `signer_key_id`, while a separate signer database stores encrypted envelopes.
+- Kept the per-workspace wallet limit configurable with a beta default of one and kept `/v1/sign` hard-locked with HTTP 423 in Release 1.
+- Fixed the still-failing Phase 1 GitHub test by making the API settings test explicitly set `app_env="local"` instead of depending on CI's `APP_ENV=test`.
+
+### Tech Stack & Tools
+- Added secp256k1 key generation, AWS KMS data-key generation/decryption, AES-256-GCM authenticated encryption, HMAC-authenticated internal signer requests, durable request-replay claims, and non-production restore verification.
+- Added independent signer SQLAlchemy metadata, Alembic configuration/migration, Render private-service pre-deploy migration, and separate signer credentials.
+- Added workspace-RLS execution-wallet records, idempotent creation, `/create_wallet`, `/wallets`, exact integer wei formatting, and Celery/Chainstack balance refresh pinned to an Ethereum mainnet block.
+- Added signer, wallet, Telegram, KMS, HTTP-client, Ethereum RPC, migration, credential-isolation, and PostgreSQL integration tests.
+
+### Problems Solved / Lessons Learned
+- [CI environment-dependent unit test]: Explicitly supplied the expected app environment in the settings test so GitHub's `APP_ENV=test` no longer changes the assertion.
+- [Custodial key exposure]: Bound ciphertext to environment, workspace, chain, address, signer key ID, and purpose through AES-GCM additional authenticated data; no key plaintext is stored in either database.
+- [Cross-user wallet leakage]: Applied forced PostgreSQL RLS and mandatory repository workspace context to every wallet read and mutation.
+- [RPC secret separation]: The API only publishes opaque workspace/wallet refresh jobs; only the worker has the Chainstack endpoint.
+- [Stale asynchronous balances]: Persisted the observed block number and rejected updates older than the latest stored snapshot.
+
+### Goals & Next Steps
+- Push this batch and let GitHub Actions run both migration stacks and all seven PostgreSQL integration cases as non-superuser roles.
+- Complete a real non-production AWS KMS plus restored-signer-database drill using `docs/runbooks/signer-backup-and-restore.md`.
+- Review and approve `docs/custody-and-recovery-notice.md`; define the out-of-band recovery/export policy before production wallets may be funded.
+- After CI evidence passes, close the remaining Phase 1 and eligible Phase 2 exit gates in `implementation.md`.
+
+---

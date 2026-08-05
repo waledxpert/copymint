@@ -126,6 +126,12 @@ class ChallengeAction(StrEnum):
     APPROVE_ACCESS = "approve_access"
     REJECT_ACCESS = "reject_access"
     REVOKE_ACCESS = "revoke_access"
+    CREATE_WALLET = "create_wallet"
+
+
+class WalletStatus(StrEnum):
+    ACTIVE = "active"
+    SUSPENDED = "suspended"
 
 
 class TelegramUpdateStatus(StrEnum):

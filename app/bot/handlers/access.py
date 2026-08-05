@@ -151,8 +151,10 @@ def build_access_router() -> Router:
         await message.answer(
             "CopyMint Release 1 commands:\n"
             "/access_status — view approval status\n"
+            "/create_wallet — review custody notice and create a wallet\n"
+            "/wallets — list your private execution wallets\n"
             "/status — system status\n\n"
-            "Collection, analytics, wallet, and paper commands unlock in later phases."
+            "Collection, analytics, and paper commands unlock in later phases."
         )
 
     @router.message(Command("admin_requests"))

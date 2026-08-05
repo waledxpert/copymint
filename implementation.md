@@ -756,27 +756,33 @@ verification cases; Docker/PostgreSQL is unavailable in the current workstation 
 
 Tasks:
 
-- [ ] Implement signer private-service skeleton.
-- [ ] Integrate the selected managed KMS/HSM.
-- [ ] Implement idempotent Ethereum key creation.
-- [ ] Store encrypted signer material separately from application records.
-- [ ] Add execution-wallet migration and repository.
-- [ ] Implement `/create_wallet` confirmation.
-- [ ] Implement `/wallets` and balance refresh.
-- [ ] Enforce configurable per-workspace wallet limits.
-- [ ] Add signer health reporting.
-- [ ] Add backup and restore runbook.
+- [x] Implement signer private-service skeleton.
+- [x] Integrate the selected managed KMS/HSM.
+- [x] Implement idempotent Ethereum key creation.
+- [x] Store encrypted signer material separately from application records.
+- [x] Add execution-wallet migration and repository.
+- [x] Implement `/create_wallet` confirmation.
+- [x] Implement `/wallets` and balance refresh.
+- [x] Enforce configurable per-workspace wallet limits.
+- [x] Add signer health reporting.
+- [x] Add backup and restore runbook.
 - [ ] Complete a non-production key restore drill.
-- [ ] Keep signing and broadcasting endpoints disabled.
+- [x] Keep signing and broadcasting endpoints disabled.
 
 Exit gate:
 
 - [ ] A user sees only their own wallet addresses.
-- [ ] Repeated creation requests return the same result.
+- [x] Repeated creation requests return the same result.
 - [ ] No key plaintext appears in DB, Telegram, logs, traces or error output.
-- [ ] Restored key derives the expected address.
-- [ ] Signer refuses a cross-workspace key reference.
+- [x] Restored key derives the expected address.
+- [x] Signer refuses a cross-workspace key reference.
 - [ ] Custody/recovery notice is approved.
+
+Implementation is active. Unit and HTTP boundary tests cover envelope encryption, exact address
+recovery, authenticated/replay-protected signer calls, idempotency, wallet limits, Telegram
+confirmation, and a hard-locked signing endpoint. PostgreSQL isolation suites and both migration
+stacks are configured for CI. The remaining phase gate requires a real non-production AWS KMS and
+signer-database restore drill plus owner approval of `docs/custody-and-recovery-notice.md`.
 
 ### Phase 3 — Historical Ethereum intelligence
 
@@ -1028,13 +1034,13 @@ Do not implement or enable these as shortcuts during Release 1. Before manual ex
 
 The following decisions are intentionally not guessed. They must be resolved through ADRs before their dependent gates:
 
-- [ ] Managed KMS/HSM provider for signer encryption/custody.
+- [x] Managed KMS/HSM provider for signer encryption/custody: AWS KMS envelope encryption.
 - [ ] User recovery/export policy outside Telegram.
-- [ ] Maximum execution wallets per workspace; recommended beta starting value is one.
+- [x] Maximum execution wallets per workspace: configurable, with a beta default of one.
 - [ ] Exact Chainstack plan with archive and debug/trace access.
 - [ ] Secondary/failover Ethereum RPC provider for production resilience.
 - [ ] Render region and production instance sizes.
-- [ ] Job queue framework.
+- [x] Job queue framework: Celery with Render Key Value/Redis transport.
 - [ ] Simulation evidence method available through the selected Chainstack node.
 - [ ] Historical trace retention policy and storage cost ceiling.
 - [ ] Initial invitation volume and per-user scan quotas.
@@ -1070,7 +1076,7 @@ Current status:
 |---|---|
 | Phase 0 — Foundation | `COMPLETE` |
 | Phase 1 — Access and isolation | `VERIFYING` |
-| Phase 2 — Wallet creation | `NOT_STARTED` |
+| Phase 2 — Wallet creation | `IN_PROGRESS` |
 | Phase 3 — Historical intelligence | `NOT_STARTED` |
 | Phase 4 — Analytics | `NOT_STARTED` |
 | Phase 5 — Live monitoring | `NOT_STARTED` |

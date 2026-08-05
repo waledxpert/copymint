@@ -15,6 +15,7 @@ from app.api.routes.telegram import router as telegram_router
 from app.application.access.challenges import ChallengeService
 from app.application.access.service import AccessService
 from app.application.access.updates import TelegramUpdateDeduplicator
+from app.application.wallets.service import WalletService
 from app.bot.factory import create_dispatcher
 from app.infrastructure.config import get_api_settings
 from app.infrastructure.db.repositories import (
@@ -22,10 +23,13 @@ from app.infrastructure.db.repositories import (
     SqlAlchemyChallengeRepository,
     SqlAlchemySecurityAudit,
     SqlAlchemyTelegramUpdateRepository,
+    SqlAlchemyWalletRepository,
 )
 from app.infrastructure.db.session import create_engine, create_session_factory
 from app.infrastructure.observability import configure_logging
 from app.infrastructure.queue import RedisRateLimiter
+from app.infrastructure.signer_client import HttpSignerWalletClient
+from app.infrastructure.wallet_balance_queue import CeleryWalletBalanceRefreshQueue
 
 
 @dataclass(slots=True)
@@ -51,6 +55,18 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         SqlAlchemyAccessRepository(sessions), platform_owner_ids=owner_ids
     )
     challenge_service = ChallengeService(SqlAlchemyChallengeRepository(sessions))
+    wallet_service = WalletService(
+        SqlAlchemyWalletRepository(sessions),
+        HttpSignerWalletClient(
+            base_url=settings.signer_internal_url,
+            auth_secret=settings.signer_auth_secret.get_secret_value(),
+        ),
+        max_wallets_per_workspace=settings.max_execution_wallets_per_workspace,
+        chain_id=settings.ethereum_chain_id,
+        balance_refresh=CeleryWalletBalanceRefreshQueue(
+            broker_url=settings.queue_url.get_secret_value()
+        ),
+    )
     redis = Redis.from_url(settings.queue_url.get_secret_value())
     rate_limiter = RedisRateLimiter(redis, environment=settings.app_env)
     bot = Bot(settings.telegram_bot_token.get_secret_value())
@@ -64,6 +80,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             security_audit=SqlAlchemySecurityAudit(sessions),
             user_rate_limit_per_minute=settings.telegram_user_rate_limit_per_minute,
             workspace_rate_limit_per_minute=settings.workspace_rate_limit_per_minute,
+            wallet_service=wallet_service,
         ),
         updates=TelegramUpdateDeduplicator(SqlAlchemyTelegramUpdateRepository(sessions)),
         webhook_secret=settings.telegram_webhook_secret.get_secret_value(),

@@ -89,6 +89,7 @@ services:
     runtime: docker
     dockerfilePath: ./Dockerfile
     dockerCommand: uvicorn app.signer.api:app --host 0.0.0.0 --port 10000
+    preDeployCommand: alembic -c signer_alembic.ini upgrade head
     maxShutdownDelaySeconds: 30
     envVars:
       - key: APP_ENV
@@ -102,6 +103,10 @@ services:
       - key: AWS_REGION
         sync: false
       - key: AWS_KMS_KEY_ARN
+        sync: false
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
         sync: false
 
   - type: keyvalue

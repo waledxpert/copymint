@@ -14,6 +14,7 @@ def create_celery_app(settings: WorkerSettings | None = None) -> Celery:
         broker_connection_retry_on_startup=True,
         broker_transport_options={"visibility_timeout": 1800},
         enable_utc=True,
+        imports=("app.workers.wallet_balances",),
         result_backend=None,
         task_acks_late=True,
         task_default_queue="maintenance",

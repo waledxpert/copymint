@@ -8,10 +8,12 @@ from app.infrastructure.db.repositories.challenges import SqlAlchemyChallengeRep
 from app.infrastructure.db.repositories.telegram_updates import (
     SqlAlchemyTelegramUpdateRepository,
 )
+from app.infrastructure.db.repositories.wallets import SqlAlchemyWalletRepository
 
 __all__ = [
     "SqlAlchemyAccessRepository",
     "SqlAlchemyChallengeRepository",
     "SqlAlchemySecurityAudit",
     "SqlAlchemyTelegramUpdateRepository",
+    "SqlAlchemyWalletRepository",
 ]

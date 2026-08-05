@@ -6,6 +6,7 @@ from app.infrastructure.config.settings import ApiSettings, SignerSettings, Work
 
 def api_values() -> dict[str, object]:
     return {
+        "app_env": "local",
         "database_url": "postgresql://user:password@localhost/copymint",
         "queue_url": "redis://localhost:6379/0",
         "telegram_bot_token": "000000000:replace_with_test_token_value",

@@ -27,6 +27,11 @@ def test_render_topology_keeps_process_secrets_separate() -> None:
     assert "CHAINSTACK_ETHEREUM_HTTP_URL" in worker_keys
     assert "TELEGRAM_BOT_TOKEN" not in worker_keys
     assert "AWS_KMS_KEY_ARN" in signer_keys
+    assert "AWS_ACCESS_KEY_ID" in signer_keys
+    assert "AWS_SECRET_ACCESS_KEY" in signer_keys
+    assert services["copymint-signer"]["preDeployCommand"] == (
+        "alembic -c signer_alembic.ini upgrade head"
+    )
     assert "TELEGRAM_BOT_TOKEN" not in signer_keys
     assert "CHAINSTACK_ETHEREUM_HTTP_URL" not in signer_keys
 

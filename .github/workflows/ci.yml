@@ -60,15 +60,36 @@ jobs:
         run: |
           psql -h localhost -U copymint_admin -d copymint_test -v ON_ERROR_STOP=1 <<'SQL'
           CREATE ROLE copymint_app LOGIN PASSWORD 'copymint_app_test_only' NOSUPERUSER;
+          CREATE ROLE copymint_signer LOGIN PASSWORD 'copymint_signer_test_only' NOSUPERUSER;
           GRANT CONNECT ON DATABASE copymint_test TO copymint_app;
           GRANT USAGE ON SCHEMA public TO copymint_app;
           GRANT SELECT, INSERT, UPDATE, DELETE, TRUNCATE ON ALL TABLES IN SCHEMA public TO copymint_app;
+          SQL
+          createdb -h localhost -U copymint_admin -O copymint_admin copymint_signer_test
+
+      - name: Signer migration and credential isolation
+        env:
+          APP_ENV: test
+          PGPASSWORD: copymint_test_only
+          SIGNER_DATABASE_URL: postgresql+psycopg://copymint_admin:copymint_test_only@localhost:5432/copymint_signer_test
+          SIGNER_AUTH_SECRET: ssssssssssssssssssssssssssssssss
+          AWS_REGION: eu-west-1
+          AWS_KMS_KEY_ARN: arn:aws:kms:eu-west-1:000000000000:key/test
+        run: |
+          uv run alembic -c signer_alembic.ini upgrade head
+          psql -h localhost -U copymint_admin -d copymint_signer_test -v ON_ERROR_STOP=1 <<'SQL'
+          REVOKE CONNECT ON DATABASE copymint_signer_test FROM PUBLIC;
+          GRANT CONNECT ON DATABASE copymint_signer_test TO copymint_signer;
+          REVOKE ALL ON SCHEMA public FROM PUBLIC;
+          GRANT USAGE ON SCHEMA public TO copymint_signer;
+          GRANT SELECT, INSERT, UPDATE, DELETE, TRUNCATE ON ALL TABLES IN SCHEMA public TO copymint_signer;
           SQL
 
       - name: Test
         env:
           APP_ENV: test
           DATABASE_URL: postgresql+psycopg://copymint_app:copymint_app_test_only@localhost:5432/copymint_test
+          SIGNER_DATABASE_URL: postgresql+psycopg://copymint_signer:copymint_signer_test_only@localhost:5432/copymint_signer_test
           RUN_DATABASE_TESTS: "1"
         run: uv run pytest
 

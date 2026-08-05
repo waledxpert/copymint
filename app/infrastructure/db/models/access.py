@@ -13,6 +13,7 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     LargeBinary,
+    Numeric,
     String,
     Text,
     UniqueConstraint,
@@ -31,6 +32,7 @@ from app.domain.enums import (
     Severity,
     TelegramUpdateStatus,
     UserStatus,
+    WalletStatus,
     WorkspaceRole,
     WorkspaceStatus,
 )
@@ -247,3 +249,33 @@ class AuditLog(Base):
     occurred_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=text("CURRENT_TIMESTAMP")
     )
+
+
+class ExecutionWallet(TimestampMixin, Base):
+    __tablename__ = "execution_wallets"
+    __table_args__ = (
+        UniqueConstraint("signer_key_id"),
+        UniqueConstraint("chain_id", "address"),
+        UniqueConstraint("workspace_id", "idempotency_key_hash"),
+        CheckConstraint("chain_id = 1", name="ethereum_mainnet_only"),
+        CheckConstraint("octet_length(idempotency_key_hash) = 32", name="idempotency_sha256"),
+        CheckConstraint("balance_wei >= 0", name="nonnegative_balance"),
+        Index("ix_execution_wallets_workspace_created", "workspace_id", "created_at"),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid7)
+    workspace_id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("workspaces.id", ondelete="RESTRICT"), nullable=False
+    )
+    chain_id: Mapped[int] = mapped_column(BigInteger, nullable=False, default=1)
+    address: Mapped[str] = mapped_column(String(42), nullable=False)
+    signer_key_id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), nullable=False)
+    idempotency_key_hash: Mapped[bytes] = mapped_column(LargeBinary(32), nullable=False)
+    status: Mapped[WalletStatus] = mapped_column(
+        enum_type(WalletStatus, "execution_wallet_status"),
+        nullable=False,
+        default=WalletStatus.ACTIVE,
+    )
+    balance_wei: Mapped[int] = mapped_column(Numeric(78, 0), nullable=False, default=0)
+    balance_block_number: Mapped[int | None] = mapped_column(BigInteger)
+    balance_refreshed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

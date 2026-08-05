@@ -92,7 +92,10 @@ class ChallengeService:
         resource_id: UUID,
         authoritative_payload: dict[str, Any] | None = None,
     ) -> IssuedChallenge:
-        actor.require_platform_owner()
+        if action is ChallengeAction.CREATE_WALLET:
+            actor.require_workspace()
+        else:
+            actor.require_platform_owner()
         raw_token = secrets.token_urlsafe(32)
         record = await self._repository.create_challenge(
             token_hash=hash_challenge_token(raw_token),
@@ -113,7 +116,10 @@ class ChallengeService:
         token: str,
         expected_action: ChallengeAction,
     ) -> ChallengeRecord:
-        actor.require_platform_owner()
+        if expected_action is ChallengeAction.CREATE_WALLET:
+            actor.require_workspace()
+        else:
+            actor.require_platform_owner()
         now = self._clock()
         record = await self._repository.consume_challenge(
             token_hash=hash_challenge_token(token),
