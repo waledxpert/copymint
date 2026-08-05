@@ -100,7 +100,26 @@ async def run(args: argparse.Namespace) -> None:
         )
         if restored != args.expected_address:
             raise RuntimeError("restored address does not match expected address")
-        print(json.dumps({"result": "passed", "expected_address": restored}, sort_keys=True))
+        try:
+            await service.verify_restore(
+                signer_key_id=args.signer_key_id,
+                workspace_id=uuid7(),
+                chain_id=1,
+            )
+        except LookupError:
+            isolation = "passed"
+        else:
+            raise RuntimeError("cross-workspace restore was not rejected")
+        print(
+            json.dumps(
+                {
+                    "result": "passed",
+                    "expected_address": restored,
+                    "workspace_isolation": isolation,
+                },
+                sort_keys=True,
+            )
+        )
     finally:
         await engine.dispose()
 

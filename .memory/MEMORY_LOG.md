@@ -189,3 +189,27 @@
 - Push this policy, drill tooling, and KMS error-sanitization batch after the full quality suite remains green.
 
 ---
+
+## 2026-08-05 — Phase 2 restore gate completed
+
+### Project Status & Decisions
+- Confirmed the owner added the scoped AWS KMS permissions and successfully reran the real non-production drill.
+- Marked every Phase 2 task and exit gate complete and changed Phase 2 to `COMPLETE` in `implementation.md`.
+- Retained legal review as a launch/funding gate; no signing, broadcasting, recovery, or export capability was enabled.
+
+### Tech Stack & Tools
+- Generated an unfunded Ethereum drill wallet using a real AWS KMS data key, verified creation idempotency, restored the exact address, and rejected a wrong workspace.
+- Created a custom-format PostgreSQL signer backup, restored it into the isolated temporary `copymint_signer_restore_drill` database, and verified the exact address again using AWS KMS.
+- Verified application credentials could not enter the restored signer database and reviewed only schema column names for absence of a plaintext private-key field.
+- Recorded sanitized drill evidence in `docs/runbooks/evidence/2026-08-05-signer-restore-drill.md`.
+
+### Problems Solved / Lessons Learned
+- [Incomplete IAM permissions]: Adding key-scoped `kms:DescribeKey`, `kms:GenerateDataKey`, and `kms:Decrypt` allowed the complete live KMS round trip.
+- [Restore evidence needed a negative test]: Extended the drill verifier to reject a random wrong workspace against the restored database as well as the source database.
+- [Disposable custody artifacts]: Removed the exact temporary restored database, backup file, and unfunded source drill envelope after evidence capture; counts verified all three were gone.
+
+### Goals & Next Steps
+- Push the Phase 2 completion evidence and enhanced drill verifier, then confirm GitHub Actions remains green.
+- Begin Phase 3 with Ethereum chain, collection, scan, evidence, and mint-event migrations plus the Chainstack provider contract.
+
+---

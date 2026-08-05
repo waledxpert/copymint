@@ -767,14 +767,14 @@ Tasks:
 - [x] Enforce configurable per-workspace wallet limits.
 - [x] Add signer health reporting.
 - [x] Add backup and restore runbook.
-- [ ] Complete a non-production key restore drill.
+- [x] Complete a non-production key restore drill.
 - [x] Keep signing and broadcasting endpoints disabled.
 
 Exit gate:
 
 - [x] A user sees only their own wallet addresses.
 - [x] Repeated creation requests return the same result.
-- [ ] No key plaintext appears in DB, Telegram, logs, traces or error output.
+- [x] No key plaintext appears in DB, Telegram, logs, traces or error output.
 - [x] Restored key derives the expected address.
 - [x] Signer refuses a cross-workspace key reference.
 - [x] Custody/recovery notice is owner-approved; legal review remains a launch gate.
@@ -783,10 +783,10 @@ Implementation is active. Unit and HTTP boundary tests cover envelope encryption
 recovery, authenticated/replay-protected signer calls, idempotency, wallet limits, Telegram
 confirmation, and a hard-locked signing endpoint. PostgreSQL isolation suites and both migration
 stacks pass in GitHub Actions and against separate local Docker PostgreSQL services. The remaining
-technical gate requires a real non-production AWS KMS and signer-database restore drill. The first
-live attempt reached AWS but was denied because the drill IAM identity lacked `kms:DescribeKey` on
-the selected key. The custody notice is owner-approved; legal review remains required before users
-may fund wallets.
+technical gate passed using a real non-production AWS KMS key and an isolated PostgreSQL
+backup/restore copy; evidence is recorded in
+`docs/runbooks/evidence/2026-08-05-signer-restore-drill.md`. The custody notice is owner-approved;
+legal review remains required before users may fund wallets.
 
 ### Phase 3 — Historical Ethereum intelligence
 
@@ -1081,7 +1081,7 @@ Current status:
 |---|---|
 | Phase 0 — Foundation | `COMPLETE` |
 | Phase 1 — Access and isolation | `COMPLETE` |
-| Phase 2 — Wallet creation | `IN_PROGRESS` |
+| Phase 2 — Wallet creation | `COMPLETE` |
 | Phase 3 — Historical intelligence | `NOT_STARTED` |
 | Phase 4 — Analytics | `NOT_STARTED` |
 | Phase 5 — Live monitoring | `NOT_STARTED` |
