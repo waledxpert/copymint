@@ -1,0 +1,98 @@
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "copymint"
+version = "0.1.0"
+description = "Invite-only Ethereum NFT mint intelligence and paper-copy system"
+readme = "README.md"
+requires-python = ">=3.13.13,<3.14"
+license = { text = "Proprietary" }
+authors = [{ name = "Wale" }]
+dependencies = [
+  "aiogram>=3.22,<4",
+  "alembic>=1.16,<2",
+  "boto3>=1.40,<2",
+  "celery[redis]>=5.5,<6",
+  "cryptography>=50,<51",
+  "fastapi>=0.116,<1",
+  "httpx>=0.28,<1",
+  "pydantic>=2.11,<3",
+  "pydantic-settings>=2.10,<3",
+  "psycopg[binary,pool]>=3.2,<4",
+  "sqlalchemy[asyncio]>=2.0.43,<3",
+  "structlog>=25.4,<26",
+  "uvicorn[standard]>=0.35,<1",
+  "web3>=7.13,<8",
+]
+
+[dependency-groups]
+dev = [
+  "mypy>=1.17,<2",
+  "pip-audit>=2.9,<3",
+  "pytest>=9.0.3,<10",
+  "pytest-asyncio>=1.1,<2",
+  "pytest-cov>=6.2,<8",
+  "ruff>=0.12,<1",
+]
+
+[project.scripts]
+copymint-api = "app.api.main:run"
+copymint-signer = "app.signer.api:run"
+
+[tool.uv]
+default-groups = ["dev"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[tool.pytest.ini_options]
+addopts = "-ra --strict-config --strict-markers --cov=app --cov-report=term-missing --cov-fail-under=80"
+testpaths = ["tests"]
+asyncio_mode = "auto"
+markers = [
+  "database: requires PostgreSQL",
+  "provider: requires explicit external provider credentials",
+  "fork: requires a pinned Ethereum fork",
+]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 100
+extend-exclude = ["app/infrastructure/db/migrations/versions"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "ASYNC", "S", "RUF"]
+ignore = ["S101"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["S101", "S105", "S106"]
+"app/infrastructure/db/migrations/env.py" = ["E402"]
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+warn_unreachable = true
+plugins = ["pydantic.mypy"]
+exclude = ["app/infrastructure/db/migrations"]
+
+[[tool.mypy.overrides]]
+module = ["celery", "celery.*"]
+ignore_missing_imports = true
+
+[tool.coverage.run]
+branch = true
+source = ["app"]
+omit = [
+  "app/infrastructure/db/migrations/*",
+  "app/workers/celery_app.py",
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+exclude_also = [
+  "if TYPE_CHECKING:",
+  "if __name__ == .__main__.:",
+]

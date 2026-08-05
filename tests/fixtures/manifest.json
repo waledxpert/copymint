@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "network": {
+    "namespace": "eip155",
+    "chain_id": 1,
+    "name": "Ethereum mainnet"
+  },
+  "rules": {
+    "raw_payloads_are_immutable": true,
+    "source_transactions_must_be_finalized": true,
+    "expected_results_require_review": true,
+    "placeholder_transactions_do_not_pass_the_fixture_gate": true
+  },
+  "fixtures": [
+    {"id": "erc721_direct_paid_public", "status": "needed", "required_evidence": ["transaction", "receipt", "logs", "trace", "sale_state"]},
+    {"id": "erc721_direct_free_public", "status": "needed", "required_evidence": ["transaction", "receipt", "logs", "trace", "sale_state"]},
+    {"id": "erc721_gift_mint", "status": "needed", "required_evidence": ["transaction", "receipt", "logs", "trace"]},
+    {"id": "erc1155_transfer_single", "status": "needed", "required_evidence": ["transaction", "receipt", "logs"]},
+    {"id": "erc1155_transfer_batch", "status": "needed", "required_evidence": ["transaction", "receipt", "logs"]},
+    {"id": "erc2309_consecutive", "status": "needed", "required_evidence": ["transaction", "receipt", "logs"]},
+    {"id": "seadrop_public", "status": "needed", "required_evidence": ["transaction", "receipt", "logs", "trace", "sale_state"]},
+    {"id": "seadrop_allowlist_rejection", "status": "needed", "required_evidence": ["transaction", "receipt", "logs", "trace", "sale_state"]},
+    {"id": "seadrop_signed_rejection", "status": "needed", "required_evidence": ["transaction", "receipt", "logs", "trace", "sale_state"]},
+    {"id": "admin_airdrop", "status": "needed", "required_evidence": ["transaction", "receipt", "logs"]},
+    {"id": "bridge_or_migration_mint", "status": "needed", "required_evidence": ["transaction", "receipt", "logs", "trace"]},
+    {"id": "lazy_marketplace_mint", "status": "needed", "required_evidence": ["transaction", "receipt", "logs", "trace"]},
+    {"id": "erc4337_bundler", "status": "needed", "required_evidence": ["transaction", "receipt", "logs", "trace", "user_operation"]},
+    {"id": "unknown_relayer", "status": "needed", "required_evidence": ["transaction", "receipt", "logs", "trace"]},
+    {"id": "reorganized_log", "status": "synthetic_needed", "required_evidence": ["block_before", "block_after", "removed_log"]}
+  ]
+}

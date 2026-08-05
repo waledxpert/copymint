@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: copymint_test
+          POSTGRES_USER: copymint
+          POSTGRES_PASSWORD: copymint_test_only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U copymint -d copymint_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Install pinned uv and Python
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: 0.11.6
+          python-version: 3.13.13
+          enable-cache: true
+
+      - name: Install locked dependencies
+        run: uv sync --frozen --group dev
+
+      - name: Check formatting
+        run: uv run ruff format --check .
+
+      - name: Lint
+        run: uv run ruff check .
+
+      - name: Type check
+        run: uv run mypy app
+
+      - name: Test
+        run: uv run pytest
+
+      - name: Migration smoke test
+        env:
+          APP_ENV: test
+          DATABASE_URL: postgresql+psycopg://copymint:copymint_test_only@localhost:5432/copymint_test
+        run: uv run alembic upgrade head
+
+      - name: Scan repository for secrets
+        run: uv run python scripts/secret_scan.py
+
+      - name: Audit dependencies
+        run: uv run pip-audit
+
+      - name: Build production container
+        run: docker build --tag copymint-ci:${{ github.sha }} .

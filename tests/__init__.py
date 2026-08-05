@@ -1,0 +1,1 @@
+"""CopyMint test suite."""

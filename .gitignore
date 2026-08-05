@@ -1,0 +1,25 @@
+.env
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+dist/
+build/
+.idea/
+.vscode/
+*.log
+*.sqlite3
+.DS_Store
+Thumbs.db
+
+# Local signer material is forbidden from source control.
+*.key
+*.pem
+*.seed
+signer-data/

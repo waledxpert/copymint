@@ -1,0 +1,45 @@
+from pathlib import Path
+
+import yaml
+
+ROOT = Path(__file__).parents[2]
+
+
+def load_yaml(name: str) -> dict[str, object]:
+    return yaml.safe_load((ROOT / name).read_text(encoding="utf-8"))
+
+
+def test_render_topology_keeps_process_secrets_separate() -> None:
+    blueprint = load_yaml("render.yaml")
+    services = {service["name"]: service for service in blueprint["services"]}
+
+    assert len(services) == len(blueprint["services"])
+    assert services["copymint-bot-api"]["type"] == "web"
+    assert services["copymint-signer"]["type"] == "pserv"
+    assert services["copymint-queue"]["maxmemoryPolicy"] == "noeviction"
+
+    api_keys = {item["key"] for item in services["copymint-bot-api"]["envVars"]}
+    worker_keys = {item["key"] for item in services["copymint-indexer-worker"]["envVars"]}
+    signer_keys = {item["key"] for item in services["copymint-signer"]["envVars"]}
+
+    assert "TELEGRAM_BOT_TOKEN" in api_keys
+    assert "CHAINSTACK_ETHEREUM_HTTP_URL" not in api_keys
+    assert "CHAINSTACK_ETHEREUM_HTTP_URL" in worker_keys
+    assert "TELEGRAM_BOT_TOKEN" not in worker_keys
+    assert "AWS_KMS_KEY_ARN" in signer_keys
+    assert "TELEGRAM_BOT_TOKEN" not in signer_keys
+    assert "CHAINSTACK_ETHEREUM_HTTP_URL" not in signer_keys
+
+    for service in services.values():
+        for variable in service.get("envVars", []):
+            if variable["key"] == "RELEASE_EXECUTION_CEILING":
+                assert variable["value"] == "paper"
+
+
+def test_local_queue_uses_persistence_and_noeviction() -> None:
+    compose = load_yaml("compose.yaml")
+    queue = compose["services"]["queue"]
+    assert "--appendonly" in queue["command"]
+    assert "yes" in queue["command"]
+    assert "noeviction" in queue["command"]
+    assert queue["volumes"] == ["queue-data:/data"]

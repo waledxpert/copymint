@@ -1,0 +1,116 @@
+services:
+  - type: web
+    name: copymint-bot-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerCommand: uvicorn app.api.main:app --host 0.0.0.0 --port 10000 --proxy-headers
+    healthCheckPath: /health/ready
+    preDeployCommand: alembic upgrade head
+    maxShutdownDelaySeconds: 30
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: RELEASE_EXECUTION_CEILING
+        value: paper
+      - key: DATABASE_URL
+        fromDatabase:
+          name: copymint-postgres
+          property: connectionString
+      - key: QUEUE_URL
+        fromService:
+          type: keyvalue
+          name: copymint-queue
+          property: connectionString
+      - key: SIGNER_INTERNAL_URL
+        fromService:
+          type: pserv
+          name: copymint-signer
+          property: hostport
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_WEBHOOK_SECRET
+        sync: false
+      - key: TELEGRAM_PLATFORM_OWNER_IDS
+        sync: false
+      - key: SIGNER_AUTH_SECRET
+        sync: false
+
+  - type: worker
+    name: copymint-indexer-worker
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerCommand: celery -A app.workers.celery_app:celery_app worker --queues indexer --loglevel INFO
+    maxShutdownDelaySeconds: 120
+    envVars: &workerEnv
+      - key: APP_ENV
+        value: production
+      - key: RELEASE_EXECUTION_CEILING
+        value: paper
+      - key: DATABASE_URL
+        fromDatabase:
+          name: copymint-postgres
+          property: connectionString
+      - key: QUEUE_URL
+        fromService:
+          type: keyvalue
+          name: copymint-queue
+          property: connectionString
+      - key: CHAINSTACK_ETHEREUM_HTTP_URL
+        sync: false
+      - key: CHAINSTACK_ETHEREUM_WSS_URL
+        sync: false
+
+  - type: worker
+    name: copymint-live-worker
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerCommand: celery -A app.workers.celery_app:celery_app worker --queues live --loglevel INFO
+    maxShutdownDelaySeconds: 120
+    envVars: *workerEnv
+
+  - type: worker
+    name: copymint-analytics-worker
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerCommand: celery -A app.workers.celery_app:celery_app worker --queues analytics --loglevel INFO
+    maxShutdownDelaySeconds: 120
+    envVars: *workerEnv
+
+  - type: worker
+    name: copymint-opportunity-worker
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerCommand: celery -A app.workers.celery_app:celery_app worker --queues opportunities --loglevel INFO
+    maxShutdownDelaySeconds: 120
+    envVars: *workerEnv
+
+  - type: pserv
+    name: copymint-signer
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerCommand: uvicorn app.signer.api:app --host 0.0.0.0 --port 10000
+    maxShutdownDelaySeconds: 30
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: RELEASE_EXECUTION_CEILING
+        value: paper
+      - key: SIGNER_DATABASE_URL
+        sync: false
+      - key: SIGNER_AUTH_SECRET
+        sync: false
+      - key: AWS_REGION
+        sync: false
+      - key: AWS_KMS_KEY_ARN
+        sync: false
+
+  - type: keyvalue
+    name: copymint-queue
+    ipAllowList: []
+    maxmemoryPolicy: noeviction
+
+databases:
+  - name: copymint-postgres
+    databaseName: copymint
+    user: copymint_app
+    ipAllowList: []

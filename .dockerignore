@@ -1,0 +1,13 @@
+.git
+.github
+.memory
+.env
+.venv
+__pycache__
+.pytest_cache
+.mypy_cache
+.ruff_cache
+htmlcov
+*.pyc
+*.log
+NFT_Mint_Intelligence_Copy_Mint_Technical_Specification.docx
