@@ -7,7 +7,13 @@ from sqlalchemy.exc import DBAPIError, IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.application.ethereum.decoders import ERC721_TRANSFER_TOPIC
-from app.application.ethereum.ports import EvmLog
+from app.application.ethereum.ports import (
+    BlockReference,
+    EvmLog,
+    EvmReceipt,
+    EvmTransaction,
+    ProviderError,
+)
 from app.application.ethereum.scanner import ScanBatch
 from app.domain.enums import (
     CollectionScanStatus,
@@ -27,9 +33,54 @@ from app.infrastructure.db.models.ethereum import (
     RawEvidence,
     ScanCheckpoint,
 )
-from app.infrastructure.db.repositories.ethereum import SqlAlchemyMintBatchConsumer
+from app.infrastructure.db.repositories.ethereum import (
+    SqlAlchemyMintBatchConsumer,
+    SqlAlchemyMintEnricher,
+)
 
 pytestmark = pytest.mark.database
+
+
+class EnrichmentProvider:
+    alias = "fixture-enrichment"
+
+    async def chain_id(self) -> int:
+        return 1
+
+    async def block(self, tag: int | str) -> BlockReference:
+        raise NotImplementedError
+
+    async def code(self, address: str, block: int | str = "latest") -> bytes:
+        raise NotImplementedError
+
+    async def storage_at(self, address: str, slot: str, block: int | str) -> bytes:
+        raise NotImplementedError
+
+    async def logs(self, **values: object) -> list[EvmLog]:
+        raise NotImplementedError
+
+    async def transaction(self, transaction_hash: str) -> EvmTransaction:
+        return EvmTransaction(
+            transaction_hash=transaction_hash,
+            sender="0x" + "bb" * 20,
+            recipient="0x" + "77" * 20,
+            value_wei=10**18,
+            input_data="0x12345678",
+            block_number=120,
+        )
+
+    async def receipt(self, transaction_hash: str) -> EvmReceipt:
+        return EvmReceipt(
+            transaction_hash=transaction_hash,
+            block_number=120,
+            block_hash="0x" + "99" * 32,
+            status=1,
+            gas_used=100_000,
+            effective_gas_price=1_000_000_000,
+        )
+
+    async def trace_transaction(self, transaction_hash: str) -> dict[str, object]:
+        raise ProviderError("http_403", transient=False)
 
 
 @pytest.mark.asyncio
@@ -158,3 +209,28 @@ async def test_batch_persistence_and_checkpoint_are_atomic_and_idempotent(
     assert checkpoint is not None
     assert checkpoint.last_committed_block_number == 120
     assert checkpoint.last_committed_block_hash == bytes.fromhex("99" * 32)
+
+    enricher = SqlAlchemyMintEnricher(
+        database_sessions,
+        EnrichmentProvider(),
+        provider_alias="fixture-enrichment",
+    )
+    warnings = await enricher.enrich_range(
+        collection_id=collection_id, start_block=120, end_block=120
+    )
+    assert warnings == ("trace_unavailable:http_403",)
+    assert (
+        await enricher.enrich_range(collection_id=collection_id, start_block=120, end_block=120)
+        == ()
+    )
+    async with database_sessions() as session:
+        enriched = await session.scalar(select(MintEvent))
+        evidence_kinds = set(await session.scalars(select(RawEvidence.kind)))
+    assert enriched is not None
+    assert enriched.transaction_sender == "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB"
+    assert enriched.probable_initiator == enriched.transaction_sender
+    assert enriched.identity_confidence == 85
+    assert enriched.identity_reason_code == "direct_transaction_sender"
+    assert enriched.route is MintRoute.DIRECT
+    assert enriched.classification is MintClassification.UNKNOWN_MINT
+    assert evidence_kinds == {EvidenceKind.LOG, EvidenceKind.TRANSACTION, EvidenceKind.RECEIPT}

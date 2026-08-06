@@ -86,9 +86,21 @@ def build_collection_router() -> Router:
         lines = ["Your Ethereum collections:"]
         for index, collection in enumerate(collections, start=1):
             name = f" — {collection.label}" if collection.label else ""
+            progress = ""
+            if (
+                collection.scan_start_block is not None
+                and collection.scan_end_block is not None
+                and collection.last_scanned_block is not None
+            ):
+                span = max(1, collection.scan_end_block - collection.scan_start_block + 1)
+                covered = max(0, collection.last_scanned_block - collection.scan_start_block + 1)
+                progress = f" ({min(100, covered * 100 // span)}%)"
             lines.append(
-                f"{index}. {collection.address}{name}\n   Scan: {collection.scan_status.value}"
+                f"{index}. {collection.address}{name}\n"
+                f"   Scan: {collection.scan_status.value}{progress}"
             )
+            if collection.quality_warning_codes:
+                lines.append("   Quality warning: " + ", ".join(collection.quality_warning_codes))
         await message.answer("\n".join(lines))
 
     return router

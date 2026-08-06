@@ -299,3 +299,28 @@ tests and 83.42% coverage.
 - Add worker kill/resume evidence and reviewed historical golden fixtures before closing Phase 3 exit gates.
 
 ---
+
+## 2026-08-06 — Persistent mint enrichment and scan quality reporting
+
+### Project Status & Decisions
+- Completed Phase 3 transaction/receipt/optional-trace enrichment and persisted identity roles, confidence, and reason codes.
+- Marked the low-confidence identity exit gate complete: indirect calls and known relayers remain unknown when trace evidence is unavailable.
+- Kept full route/classification and proactive Telegram scan notifications open; `/collections` now provides durable checkpoint progress and quality-warning visibility.
+
+### Tech Stack & Tools
+- Added `SqlAlchemyMintEnricher` to fetch RPC evidence before opening a database transaction, append idempotent transaction/receipt/trace evidence, and update every mint row for the transaction atomically.
+- Persisted ERC-1155 operator identity from decoded logs and added direct sender/payer/initiator resolution with explicit reason codes.
+- Wired enrichment into each resumable scan slice and deduplicated provider warnings in `ScanJob.quality_warnings`.
+- Extended workspace collection reads with scan bounds, checkpoint position, percentage progress, and quality-warning codes.
+
+### Problems Solved / Lessons Learned
+- [Unsafe initiator inference]: Indirect transaction targets now produce `probable_initiator = NULL`, confidence `0`, and `indirect_call_requires_trace` rather than copying the transaction sender.
+- [Unavailable debug trace]: HTTP 403 is stored as the quality warning `trace_unavailable:http_403`; transaction and receipt enrichment still completes.
+- [Coverage regression]: Added direct Celery continuation tests instead of excluding the new scan worker; the full suite returned above the enforced threshold.
+
+### Goals & Next Steps
+- Implement adapter-aware mint route and classification reason codes using reviewed sale-state evidence.
+- Add proactive, workspace-safe Telegram progress/completion/quality-warning delivery without giving the indexer worker the bot token.
+- Add worker kill/resume evidence and reviewed golden fixtures to close the remaining Phase 3 exit gates.
+
+---

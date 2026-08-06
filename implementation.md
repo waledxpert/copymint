@@ -802,8 +802,8 @@ Tasks:
 - [x] Implement ERC-2309 decoder and range policy.
 - [x] Implement adaptive block scanner.
 - [x] Make event persistence and checkpoint advancement atomic.
-- [ ] Add transaction, receipt and trace enrichment.
-- [ ] Implement identity roles, confidence and reason codes.
+- [x] Add transaction, receipt and trace enrichment.
+- [x] Implement identity roles, confidence and reason codes.
 - [ ] Implement mint route and classification reason codes.
 - [x] Add `/add_collection`, `/scan` and `/collections`.
 - [ ] Add progress and quality-warning notifications.
@@ -822,7 +822,7 @@ Exit gate:
 - [x] ERC-1155 batch sub-index keys are deterministic.
 - [x] Provider range errors shrink and retry safely.
 - [x] Re-scans are idempotent.
-- [ ] Low-confidence identities are stored as unknown rather than guessed.
+- [x] Low-confidence identities are stored as unknown rather than guessed.
 
 ### Phase 4 — Overlap analytics and watchlists
 

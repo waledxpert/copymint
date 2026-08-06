@@ -13,7 +13,10 @@ from app.domain.enums import CollectionScanStatus, ScanJobStatus
 from app.domain.ids import uuid7
 from app.infrastructure.config import get_worker_settings
 from app.infrastructure.db.models.ethereum import Collection, ScanCheckpoint, ScanJob
-from app.infrastructure.db.repositories.ethereum import SqlAlchemyMintBatchConsumer
+from app.infrastructure.db.repositories.ethereum import (
+    SqlAlchemyMintBatchConsumer,
+    SqlAlchemyMintEnricher,
+)
 from app.infrastructure.db.session import create_engine, create_session_factory
 from app.infrastructure.ethereum import JsonRpcEvmProvider
 from app.workers.celery_app import celery_app
@@ -110,6 +113,37 @@ async def _scan_collection(collection_id: UUID) -> ScanSliceResult:
                     provider_alias=provider.alias,
                 ),
             )
+            quality_warnings = await SqlAlchemyMintEnricher(
+                sessions,
+                provider,
+                provider_alias=provider.alias,
+            ).enrich_range(
+                collection_id=collection_id,
+                start_block=cursor,
+                end_block=slice_end,
+            )
+            if quality_warnings:
+                async with sessions() as session, session.begin():
+                    job = await session.scalar(
+                        select(ScanJob).where(
+                            ScanJob.collection_id == collection_id,
+                            ScanJob.scan_version == 1,
+                        )
+                    )
+                    if job is not None:
+                        existing = {
+                            str(item.get("code"))
+                            for item in job.quality_warnings
+                            if isinstance(item, dict)
+                        }
+                        job.quality_warnings = [
+                            *job.quality_warnings,
+                            *[
+                                {"code": warning}
+                                for warning in quality_warnings
+                                if warning not in existing
+                            ],
+                        ]
         completed = cursor > fixed_end or slice_end >= fixed_end
         if completed:
             async with sessions() as session, session.begin():
@@ -123,7 +157,11 @@ async def _scan_collection(collection_id: UUID) -> ScanSliceResult:
                 if job is not None:
                     job.status = ScanJobStatus.COMPLETED
                 if current is not None:
-                    current.scan_status = CollectionScanStatus.COMPLETE
+                    current.scan_status = (
+                        CollectionScanStatus.QUALITY_WARNING
+                        if job is not None and job.quality_warnings
+                        else CollectionScanStatus.COMPLETE
+                    )
         return ScanSliceResult(completed=completed)
     finally:
         await engine.dispose()

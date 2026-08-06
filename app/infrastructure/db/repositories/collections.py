@@ -16,13 +16,20 @@ from app.domain.enums import (
 )
 from app.domain.ids import uuid7
 from app.infrastructure.db.models.access import AuditLog
-from app.infrastructure.db.models.ethereum import Collection, WorkspaceCollection
+from app.infrastructure.db.models.ethereum import (
+    Collection,
+    ScanCheckpoint,
+    ScanJob,
+    WorkspaceCollection,
+)
 from app.infrastructure.db.repositories.access import set_workspace_context
 
 
 def collection_record(
     workspace_collection: WorkspaceCollection,
     collection: Collection,
+    job: ScanJob | None = None,
+    checkpoint: ScanCheckpoint | None = None,
 ) -> WorkspaceCollectionRecord:
     return WorkspaceCollectionRecord(
         id=workspace_collection.id,
@@ -32,6 +39,16 @@ def collection_record(
         label=workspace_collection.label,
         scan_status=collection.scan_status,
         active=workspace_collection.active,
+        scan_start_block=job.start_block if job is not None else None,
+        scan_end_block=job.end_block if job is not None else None,
+        last_scanned_block=(
+            checkpoint.last_committed_block_number if checkpoint is not None else None
+        ),
+        quality_warning_codes=tuple(
+            str(item["code"])
+            for item in (job.quality_warnings if job is not None else [])
+            if isinstance(item, dict) and isinstance(item.get("code"), str)
+        ),
     )
 
 
@@ -130,8 +147,17 @@ class SqlAlchemyWorkspaceCollectionRepository:
             await set_workspace_context(session, workspace_id)
             rows = (
                 await session.execute(
-                    select(WorkspaceCollection, Collection)
+                    select(WorkspaceCollection, Collection, ScanJob, ScanCheckpoint)
                     .join(Collection, Collection.id == WorkspaceCollection.collection_id)
+                    .outerjoin(
+                        ScanJob,
+                        (ScanJob.collection_id == Collection.id) & (ScanJob.scan_version == 1),
+                    )
+                    .outerjoin(
+                        ScanCheckpoint,
+                        (ScanCheckpoint.collection_id == Collection.id)
+                        & (ScanCheckpoint.scan_version == 1),
+                    )
                     .where(
                         WorkspaceCollection.workspace_id == workspace_id,
                         WorkspaceCollection.active.is_(True),
@@ -139,9 +165,7 @@ class SqlAlchemyWorkspaceCollectionRepository:
                     .order_by(WorkspaceCollection.created_at.asc())
                 )
             ).all()
-            return [
-                collection_record(subscription, collection) for subscription, collection in rows
-            ]
+            return [collection_record(*row) for row in rows]
 
     async def find_by_address(
         self, *, workspace_id: UUID, address: str
@@ -150,8 +174,17 @@ class SqlAlchemyWorkspaceCollectionRepository:
             await set_workspace_context(session, workspace_id)
             row = (
                 await session.execute(
-                    select(WorkspaceCollection, Collection)
+                    select(WorkspaceCollection, Collection, ScanJob, ScanCheckpoint)
                     .join(Collection, Collection.id == WorkspaceCollection.collection_id)
+                    .outerjoin(
+                        ScanJob,
+                        (ScanJob.collection_id == Collection.id) & (ScanJob.scan_version == 1),
+                    )
+                    .outerjoin(
+                        ScanCheckpoint,
+                        (ScanCheckpoint.collection_id == Collection.id)
+                        & (ScanCheckpoint.scan_version == 1),
+                    )
                     .where(
                         WorkspaceCollection.workspace_id == workspace_id,
                         WorkspaceCollection.active.is_(True),
@@ -162,4 +195,4 @@ class SqlAlchemyWorkspaceCollectionRepository:
             ).one_or_none()
             if row is None:
                 return None
-            return collection_record(row[0], row[1])
+            return collection_record(*row)

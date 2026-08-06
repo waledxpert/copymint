@@ -47,6 +47,10 @@ class FakeService:
             label="Alpha",
             scan_status=CollectionScanStatus.PENDING,
             active=True,
+            scan_start_block=100,
+            scan_end_block=199,
+            last_scanned_block=149,
+            quality_warning_codes=("trace_unavailable:http_403",),
         )
 
     async def add_collection(self, *args: Any, **kwargs: Any) -> CollectionRegistrationResult:
@@ -78,6 +82,8 @@ async def test_add_scan_and_list_collection_commands_are_clear_and_non_executing
     await handler(router, "list_collections_command")(list_message, request_context, None, service)
     assert "Alpha" in list_message.answers[0]
     assert "pending" in list_message.answers[0]
+    assert "50%" in list_message.answers[0]
+    assert "Quality warning: trace_unavailable:http_403" in list_message.answers[0]
 
 
 async def test_add_collection_usage_does_not_call_service() -> None:

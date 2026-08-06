@@ -33,20 +33,30 @@ def enrich_mint(
         raise ValueError("failed transaction cannot produce a canonical mint")
     if transaction.transaction_hash.lower() != mint.transaction_hash.lower():
         raise ValueError("transaction evidence does not match mint provenance")
+    if receipt.transaction_hash.lower() != mint.transaction_hash.lower():
+        raise ValueError("receipt evidence does not match mint provenance")
+    if transaction.block_number != mint.block_number or receipt.block_number != mint.block_number:
+        raise ValueError("transaction block does not match mint provenance")
+    if receipt.block_hash.lower() != mint.block_hash.lower():
+        raise ValueError("receipt block hash does not match mint provenance")
     sender = Web3.to_checksum_address(transaction.sender)
     payer = sender if transaction.value_wei > 0 else None
-    if known_relayer:
-        initiator = None
-        confidence = 0
-        identity_reason = "known_relayer_requires_trace"
-    else:
-        initiator = sender
-        confidence = 85
-        identity_reason = "transaction_sender_no_relayer_evidence"
     direct = (
         transaction.recipient is not None
         and transaction.recipient.lower() == mint.collection_address.lower()
     )
+    if known_relayer:
+        initiator = None
+        confidence = 0
+        identity_reason = "known_relayer_requires_trace"
+    elif not direct:
+        initiator = None
+        confidence = 0
+        identity_reason = "indirect_call_requires_trace"
+    else:
+        initiator = sender
+        confidence = 85
+        identity_reason = "direct_transaction_sender"
     route = MintRoute.DIRECT if direct else MintRoute.UNKNOWN
     route_reason = "direct_collection_call" if direct else "unrecognized_transaction_target"
     return EnrichedMint(

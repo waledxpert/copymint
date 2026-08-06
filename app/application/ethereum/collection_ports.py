@@ -16,6 +16,10 @@ class WorkspaceCollectionRecord:
     label: str | None
     scan_status: CollectionScanStatus
     active: bool
+    scan_start_block: int | None = None
+    scan_end_block: int | None = None
+    last_scanned_block: int | None = None
+    quality_warning_codes: tuple[str, ...] = ()
 
 
 class WorkspaceCollectionRepository(Protocol):

@@ -52,6 +52,23 @@ def test_known_relayer_remains_unknown_without_trace() -> None:
     assert enriched.identity_reason_code == "known_relayer_requires_trace"
 
 
+def test_indirect_call_remains_unknown_without_trace() -> None:
+    mint, transaction, receipt = evidence()
+    indirect = EvmTransaction(
+        transaction.transaction_hash,
+        transaction.sender,
+        "0x" + "66" * 20,
+        transaction.value_wei,
+        transaction.input_data,
+        transaction.block_number,
+    )
+    enriched = enrich_mint(mint, indirect, receipt)
+    assert enriched.probable_initiator is None
+    assert enriched.identity_confidence == 0
+    assert enriched.identity_reason_code == "indirect_call_requires_trace"
+    assert enriched.route is MintRoute.UNKNOWN
+
+
 def test_failed_or_mismatched_transaction_evidence_is_rejected() -> None:
     mint, transaction, receipt = evidence()
     with pytest.raises(ValueError, match="failed transaction"):
