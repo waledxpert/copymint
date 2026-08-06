@@ -804,9 +804,9 @@ Tasks:
 - [x] Make event persistence and checkpoint advancement atomic.
 - [x] Add transaction, receipt and trace enrichment.
 - [x] Implement identity roles, confidence and reason codes.
-- [ ] Implement mint route and classification reason codes.
+- [x] Implement mint route and classification reason codes.
 - [x] Add `/add_collection`, `/scan` and `/collections`.
-- [ ] Add progress and quality-warning notifications.
+- [x] Add progress and quality-warning notifications.
 
 Development provider evidence on 2026-08-06 confirms chain ID, safe/finalized tags,
 historical code, bounded logs, transaction/receipt reads, and WSS subscriptions. The endpoint
@@ -815,10 +815,16 @@ response adaptively. `debug_traceTransaction` is HTTP 403 and remains an externa
 for trace-dependent enrichment and paper simulation; see
 `docs/runbooks/evidence/2026-08-06-chainstack-capability.md`.
 
+All Phase 3 implementation tasks are complete. Final verification remains open only for reviewed
+historical golden fixtures: the configured development endpoint rejects `debug_traceTransaction`,
+while the fixture policy requires trace evidence for direct, SeaDrop, relayer, marketplace, bridge,
+and ERC-4337 cases. Phase 3 therefore stays `VERIFYING` until a trace-capable endpoint is supplied
+and the real fixture counts are reviewed.
+
 Exit gate:
 
 - [ ] Golden fixture counts match expected mint events.
-- [ ] Worker termination resumes without missing or duplicating events.
+- [x] Worker termination resumes without missing or duplicating events.
 - [x] ERC-1155 batch sub-index keys are deterministic.
 - [x] Provider range errors shrink and retry safely.
 - [x] Re-scans are idempotent.
@@ -1089,7 +1095,7 @@ Current status:
 | Phase 0 — Foundation | `COMPLETE` |
 | Phase 1 — Access and isolation | `COMPLETE` |
 | Phase 2 — Wallet creation | `COMPLETE` |
-| Phase 3 — Historical intelligence | `IN_PROGRESS` |
+| Phase 3 — Historical intelligence | `VERIFYING` |
 | Phase 4 — Analytics | `NOT_STARTED` |
 | Phase 5 — Live monitoring | `NOT_STARTED` |
 | Phase 6 — Paper mode | `NOT_STARTED` |

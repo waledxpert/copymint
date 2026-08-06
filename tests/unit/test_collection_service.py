@@ -65,7 +65,7 @@ class FakeQueue:
     def __init__(self) -> None:
         self.ids: list[UUID] = []
 
-    async def request_scan(self, *, collection_id: UUID) -> None:
+    async def request_scan(self, *, workspace_id: UUID, collection_id: UUID) -> None:
         self.ids.append(collection_id)
 
 

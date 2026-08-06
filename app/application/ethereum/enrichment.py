@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 from web3 import Web3
 
+from app.application.ethereum.classification import SaleStateEvidence, classify_mint
 from app.application.ethereum.decoders import DecodedMint
 from app.application.ethereum.ports import EvmReceipt, EvmTransaction
 from app.domain.enums import MintClassification, MintRoute
@@ -28,6 +29,7 @@ def enrich_mint(
     receipt: EvmReceipt,
     *,
     known_relayer: bool = False,
+    sale_state: SaleStateEvidence | None = None,
 ) -> EnrichedMint:
     if receipt.status != 1:
         raise ValueError("failed transaction cannot produce a canonical mint")
@@ -57,8 +59,10 @@ def enrich_mint(
         initiator = sender
         confidence = 85
         identity_reason = "direct_transaction_sender"
-    route = MintRoute.DIRECT if direct else MintRoute.UNKNOWN
-    route_reason = "direct_collection_call" if direct else "unrecognized_transaction_target"
+    decision = classify_mint(sale_state)
+    route = decision.route
+    if sale_state is None:
+        route = MintRoute.DIRECT if direct else MintRoute.UNKNOWN
     return EnrichedMint(
         mint=mint,
         transaction_sender=sender,
@@ -67,6 +71,6 @@ def enrich_mint(
         identity_confidence=confidence,
         identity_reason_code=identity_reason,
         route=route,
-        classification=MintClassification.UNKNOWN_MINT,
-        classification_reason_code=f"{route_reason}:sale_state_not_inspected",
+        classification=decision.classification,
+        classification_reason_code=decision.reason_code,
     )

@@ -21,6 +21,9 @@ def test_render_topology_keeps_process_secrets_separate() -> None:
     api_keys = {item["key"] for item in services["copymint-bot-api"]["envVars"]}
     worker_keys = {item["key"] for item in services["copymint-indexer-worker"]["envVars"]}
     signer_keys = {item["key"] for item in services["copymint-signer"]["envVars"]}
+    notification_keys = {
+        item["key"] for item in services["copymint-notification-worker"]["envVars"]
+    }
 
     assert "TELEGRAM_BOT_TOKEN" in api_keys
     assert "CHAINSTACK_ETHEREUM_HTTP_URL" not in api_keys
@@ -34,6 +37,9 @@ def test_render_topology_keeps_process_secrets_separate() -> None:
     )
     assert "TELEGRAM_BOT_TOKEN" not in signer_keys
     assert "CHAINSTACK_ETHEREUM_HTTP_URL" not in signer_keys
+    assert "TELEGRAM_BOT_TOKEN" in notification_keys
+    assert "CHAINSTACK_ETHEREUM_HTTP_URL" not in notification_keys
+    assert "AWS_KMS_KEY_ARN" not in notification_keys
 
     for service in services.values():
         for variable in service.get("envVars", []):

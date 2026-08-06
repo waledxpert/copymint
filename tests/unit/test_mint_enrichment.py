@@ -1,5 +1,6 @@
 import pytest
 
+from app.application.ethereum.classification import SaleStateEvidence
 from app.application.ethereum.decoders import DecodedMint
 from app.application.ethereum.enrichment import enrich_mint
 from app.application.ethereum.ports import EvmReceipt, EvmTransaction
@@ -42,6 +43,19 @@ def test_enrichment_preserves_facts_and_avoids_premature_classification() -> Non
     assert enriched.identity_confidence == 85
     assert enriched.route is MintRoute.DIRECT
     assert enriched.classification is MintClassification.UNKNOWN_MINT
+
+
+def test_enrichment_applies_reviewed_sale_state_classification() -> None:
+    mint, transaction, receipt = evidence()
+    enriched = enrich_mint(
+        mint,
+        transaction,
+        receipt,
+        sale_state=SaleStateEvidence(MintRoute.DIRECT, "reviewed_adapter", True, 10**17),
+    )
+    assert enriched.route is MintRoute.DIRECT
+    assert enriched.classification is MintClassification.PUBLIC_PAID_MINT
+    assert enriched.classification_reason_code == "public_sale_paid"
 
 
 def test_known_relayer_remains_unknown_without_trace() -> None:

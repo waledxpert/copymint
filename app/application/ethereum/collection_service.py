@@ -71,7 +71,7 @@ class CollectionService:
             label=self.normalize_label(label),
             correlation_id=context.correlation_id,
         )
-        queued = await self._queue(collection.collection_id)
+        queued = await self._queue(workspace_id, collection.collection_id)
         return CollectionRegistrationResult(collection, created, queued)
 
     async def request_scan(
@@ -86,14 +86,16 @@ class CollectionService:
             raise CollectionNotFound(
                 "That collection is not saved in your workspace. Use /add_collection first."
             )
-        return collection, await self._queue(collection.collection_id)
+        return collection, await self._queue(workspace_id, collection.collection_id)
 
     async def list_collections(self, context: RequestContext) -> list[WorkspaceCollectionRecord]:
         return await self._repository.list_collections(workspace_id=context.require_workspace())
 
-    async def _queue(self, collection_id: UUID) -> bool:
+    async def _queue(self, workspace_id: UUID, collection_id: UUID) -> bool:
         try:
-            await self._scan_queue.request_scan(collection_id=collection_id)
+            await self._scan_queue.request_scan(
+                workspace_id=workspace_id, collection_id=collection_id
+            )
         except Exception:
             return False
         return True

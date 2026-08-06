@@ -110,6 +110,13 @@ class WorkerSettings(DatabaseSettings):
         }
 
 
+class NotificationWorkerSettings(DatabaseSettings):
+    """Telegram notification worker settings without RPC or signer credentials."""
+
+    queue_url: SecretStr
+    telegram_bot_token: SecretStr
+
+
 class SignerSettings(RuntimeSettings):
     """Private signer settings. Contains no Telegram, queue, or Chainstack credentials."""
 
@@ -159,6 +166,11 @@ def get_ethereum_provider_settings() -> EthereumProviderSettings:
 @lru_cache(maxsize=1)
 def get_worker_settings() -> WorkerSettings:
     return WorkerSettings()
+
+
+@lru_cache(maxsize=1)
+def get_notification_worker_settings() -> NotificationWorkerSettings:
+    return NotificationWorkerSettings()
 
 
 @lru_cache(maxsize=1)

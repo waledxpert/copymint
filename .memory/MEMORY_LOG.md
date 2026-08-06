@@ -324,3 +324,28 @@ tests and 83.42% coverage.
 - Add worker kill/resume evidence and reviewed golden fixtures to close the remaining Phase 3 exit gates.
 
 ---
+
+## 2026-08-06 — Phase 3 implementation complete, fixture verification pending
+
+### Project Status & Decisions
+- Completed every Phase 3 implementation task and moved Historical Intelligence from `IN_PROGRESS` to `VERIFYING`.
+- Completed five of six Phase 3 exit gates, including deterministic restart/resume coverage without missing or duplicating block ranges.
+- Left the golden historical fixture gate open because the configured Chainstack endpoint denies required trace methods; no placeholder fixture was treated as real evidence.
+
+### Tech Stack & Tools
+- Added evidence-driven `SaleStateEvidence` classification for public paid/free, allowlist, token-gated, server-signed, admin, airdrop, bridge, migration, lazy-marketplace, and unknown mints.
+- Added a dedicated notification Celery process with database/queue/Telegram credentials only; it never receives Chainstack, signer, KMS, or AWS credentials.
+- Added RLS-authorized 25/50/75/100 percent scan milestone, completion, failure, and quality-warning Telegram delivery using opaque workspace and collection identifiers.
+- Added Render topology and regression checks for notification-worker secret separation.
+
+### Problems Solved / Lessons Learned
+- [Unsafe classification shortcuts]: Classification requires explicit adapter/sale-state evidence and otherwise remains `unknown_mint` with a reason code.
+- [Notification secret mixing]: Split notification delivery into its own worker instead of giving the indexer a Telegram bot token.
+- [False phase completion risk]: Phase 3 remains `VERIFYING` until real trace-dependent fixture evidence is captured and reviewed.
+
+### Goals & Next Steps
+- Provision a trace-capable Chainstack Ethereum development endpoint or plan.
+- Capture and review the required finalized historical fixtures, then validate expected mint counts and mark the final Phase 3 exit gate complete.
+- After that evidence passes, change Phase 3 to `COMPLETE` and begin Phase 4 overlap analytics.
+
+---

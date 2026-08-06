@@ -38,6 +38,13 @@ class RecordingConsumer:
         self.batches.append(batch)
 
 
+class TerminatingConsumer(RecordingConsumer):
+    async def commit(self, batch: ScanBatch) -> None:
+        if self.batches:
+            raise RuntimeError("simulated worker termination")
+        await super().commit(batch)
+
+
 async def test_scanner_shrinks_ranges_and_commits_without_gaps() -> None:
     provider = RangeLimitedProvider()
     consumer = RecordingConsumer()
@@ -54,6 +61,37 @@ async def test_scanner_shrinks_ranges_and_commits_without_gaps() -> None:
     covered = [
         block
         for batch in consumer.batches
+        for block in range(batch.start_block, batch.end_block + 1)
+    ]
+    assert covered == list(range(10, 19))
+
+
+async def test_worker_resume_starts_after_the_last_committed_boundary() -> None:
+    provider = RangeLimitedProvider()
+    interrupted = TerminatingConsumer()
+    scanner = AdaptiveHistoricalScanner(
+        provider, initial_chunk=3, maximum_chunk=3, dense_log_threshold=100
+    )
+    try:
+        await scanner.scan(
+            address="0x" + "11" * 20,
+            start_block=10,
+            end_block=18,
+            consumer=interrupted,
+        )
+    except RuntimeError as exc:
+        assert str(exc) == "simulated worker termination"
+    committed_boundary = interrupted.batches[-1].end_block
+    resumed = RecordingConsumer()
+    await scanner.scan(
+        address="0x" + "11" * 20,
+        start_block=committed_boundary + 1,
+        end_block=18,
+        consumer=resumed,
+    )
+    covered = [
+        block
+        for batch in [*interrupted.batches, *resumed.batches]
         for block in range(batch.start_block, batch.end_block + 1)
     ]
     assert covered == list(range(10, 19))
