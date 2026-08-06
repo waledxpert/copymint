@@ -57,6 +57,8 @@ class EvmProvider(Protocol):
 
     async def code(self, address: str, block: int | str = "latest") -> bytes: ...
 
+    async def storage_at(self, address: str, slot: str, block: int | str) -> bytes: ...
+
     async def logs(
         self,
         *,

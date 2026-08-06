@@ -15,8 +15,10 @@ from app.api.routes.telegram import router as telegram_router
 from app.application.access.challenges import ChallengeService
 from app.application.access.service import AccessService
 from app.application.access.updates import TelegramUpdateDeduplicator
+from app.application.ethereum.collection_service import CollectionService
 from app.application.wallets.service import WalletService
 from app.bot.factory import create_dispatcher
+from app.infrastructure.collection_scan_queue import CeleryCollectionScanQueue
 from app.infrastructure.config import get_api_settings
 from app.infrastructure.db.repositories import (
     SqlAlchemyAccessRepository,
@@ -24,6 +26,7 @@ from app.infrastructure.db.repositories import (
     SqlAlchemySecurityAudit,
     SqlAlchemyTelegramUpdateRepository,
     SqlAlchemyWalletRepository,
+    SqlAlchemyWorkspaceCollectionRepository,
 )
 from app.infrastructure.db.session import create_engine, create_session_factory
 from app.infrastructure.observability import configure_logging
@@ -67,6 +70,10 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             broker_url=settings.queue_url.get_secret_value()
         ),
     )
+    collection_service = CollectionService(
+        SqlAlchemyWorkspaceCollectionRepository(sessions),
+        CeleryCollectionScanQueue(broker_url=settings.queue_url.get_secret_value()),
+    )
     redis = Redis.from_url(settings.queue_url.get_secret_value())
     rate_limiter = RedisRateLimiter(redis, environment=settings.app_env)
     bot = Bot(settings.telegram_bot_token.get_secret_value())
@@ -81,6 +88,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             user_rate_limit_per_minute=settings.telegram_user_rate_limit_per_minute,
             workspace_rate_limit_per_minute=settings.workspace_rate_limit_per_minute,
             wallet_service=wallet_service,
+            collection_service=collection_service,
         ),
         updates=TelegramUpdateDeduplicator(SqlAlchemyTelegramUpdateRepository(sessions)),
         webhook_secret=settings.telegram_webhook_secret.get_secret_value(),

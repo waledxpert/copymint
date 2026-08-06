@@ -21,6 +21,7 @@ from app.infrastructure.db.models.ethereum import (
     RawEvidence,
     ScanCheckpoint,
     ScanJob,
+    WorkspaceCollection,
 )
 
 __all__ = [
@@ -40,6 +41,7 @@ __all__ = [
     "ScanJob",
     "TelegramUpdate",
     "Workspace",
+    "WorkspaceCollection",
     "WorkspaceMembership",
     "WorkspaceStrategy",
 ]

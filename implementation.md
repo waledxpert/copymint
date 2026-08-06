@@ -796,7 +796,7 @@ Tasks:
 - [x] Implement Chainstack provider interface and startup chain-ID check.
 - [x] Implement collection validation with `eth_getCode`.
 - [x] Implement deployment-block resolver and confidence metadata.
-- [ ] Implement proxy metadata history.
+- [x] Implement proxy metadata history.
 - [x] Implement ERC-721 decoder.
 - [x] Implement ERC-1155 single/batch decoder.
 - [x] Implement ERC-2309 decoder and range policy.
@@ -805,7 +805,7 @@ Tasks:
 - [ ] Add transaction, receipt and trace enrichment.
 - [ ] Implement identity roles, confidence and reason codes.
 - [ ] Implement mint route and classification reason codes.
-- [ ] Add `/add_collection`, `/scan` and `/collections`.
+- [x] Add `/add_collection`, `/scan` and `/collections`.
 - [ ] Add progress and quality-warning notifications.
 
 Development provider evidence on 2026-08-06 confirms chain ID, safe/finalized tags,

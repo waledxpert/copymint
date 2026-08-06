@@ -94,6 +94,30 @@ class Collection(TimestampMixin, Base):
     )
 
 
+class WorkspaceCollection(TimestampMixin, Base):
+    __tablename__ = "workspace_collections"
+    __table_args__ = (
+        UniqueConstraint("workspace_id", "collection_id"),
+        Index("ix_workspace_collections_workspace_created", "workspace_id", "created_at"),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid7)
+    workspace_id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("workspaces.id", ondelete="CASCADE"), nullable=False
+    )
+    collection_id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("collections.id", ondelete="RESTRICT"), nullable=False
+    )
+    label: Mapped[str | None] = mapped_column(String(120))
+    added_by_user_id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("platform_users.id", ondelete="RESTRICT"), nullable=False
+    )
+    notification_settings: Mapped[dict[str, Any]] = mapped_column(
+        JSONB, nullable=False, default=dict
+    )
+    active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+
+
 class CollectionImplementation(Base):
     __tablename__ = "collection_implementations"
     __table_args__ = (

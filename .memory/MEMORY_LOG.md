@@ -274,3 +274,28 @@ tests and 83.42% coverage.
 - Add proxy implementation history and workspace-private `/add_collection`, `/scan`, and `/collections` flows.
 
 ---
+
+## 2026-08-06 — Private collection commands and resumable scan worker
+
+### Project Status & Decisions
+- Completed the Phase 3 EIP-1967 proxy implementation-history resolver and marked the proxy-history task complete.
+- Added workspace-private `/add_collection`, `/scan`, and `/collections` flows; the same global Ethereum collection can be shared without exposing either workspace's private label or subscription.
+- Kept all Chainstack credentials in the worker. The API publishes only an opaque global collection UUID to the indexer queue.
+
+### Tech Stack & Tools
+- Added migration `0003_workspace_collections.py`, the `WorkspaceCollection` model, forced PostgreSQL RLS, repository scoping, audit creation, and a two-user isolation test.
+- Added `Eip1967ImplementationResolver` using the standardized implementation storage slot, verified `Upgraded` logs, implementation bytecode checks, and finalized-storage reconciliation.
+- Added `copymint.ethereum.scan_collection`, which validates collections and processes fixed historical ranges in resumable 100-block slices while the adaptive scanner shrinks provider-rejected requests.
+- Wired collection services, Celery publishing, Telegram handlers, API composition, and worker imports.
+
+### Problems Solved / Lessons Learned
+- [Global intelligence versus private product state]: Deduplicated the chain/address globally while placing labels, active state, actor, and notification settings behind workspace RLS.
+- [API RPC-secret boundary]: Collection commands never receive a Chainstack endpoint; only the worker validates code and scans Ethereum.
+- [Provider range restrictions]: Each durable scan slice still uses adaptive subranges, so the observed 10-block endpoint limit does not create checkpoint gaps.
+
+### Goals & Next Steps
+- Add progress and quality-warning notifications for collection scans.
+- Persist transaction/receipt enrichment and conservative identity, route, and classification reasons; keep trace-derived roles unknown until debug/trace access is enabled.
+- Add worker kill/resume evidence and reviewed historical golden fixtures before closing Phase 3 exit gates.
+
+---

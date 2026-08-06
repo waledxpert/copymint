@@ -118,6 +118,7 @@ async def test_provider_normalizes_transaction_receipt_and_trace_evidence() -> N
                 "effectiveGasPrice": "0x3b9aca00",
             },
             "debug_traceTransaction": {"type": "CALL", "from": ADDRESS},
+            "eth_getStorageAt": "0x" + "00" * 12 + "44" * 20,
         }
         return httpx.Response(
             200,
@@ -130,8 +131,10 @@ async def test_provider_normalizes_transaction_receipt_and_trace_evidence() -> N
     transaction = await provider.transaction(tx_hash)
     receipt = await provider.receipt(tx_hash)
     trace = await provider.trace_transaction(tx_hash)
+    storage = await provider.storage_at(ADDRESS, "0x" + "00" * 32, 32)
     assert transaction.value_wei == 16
     assert transaction.block_number == 32
     assert receipt.status == 1
     assert receipt.gas_used == 21_000
     assert trace["type"] == "CALL"
+    assert storage == bytes.fromhex("00" * 12 + "44" * 20)

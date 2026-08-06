@@ -91,6 +91,19 @@ class JsonRpcEvmProvider:
         except ValueError:
             raise ProviderError("invalid_code", transient=False) from None
 
+    async def storage_at(self, address: str, slot: str, block: int | str) -> bytes:
+        block_tag = hex(block) if isinstance(block, int) else block
+        result = await self._rpc("eth_getStorageAt", [address, slot, block_tag])
+        if not isinstance(result, str) or not result.startswith("0x"):
+            raise ProviderError("invalid_storage", transient=False)
+        try:
+            value = bytes.fromhex(result[2:])
+        except ValueError:
+            raise ProviderError("invalid_storage", transient=False) from None
+        if len(value) != 32:
+            raise ProviderError("invalid_storage", transient=False)
+        return value
+
     async def logs(
         self,
         *,
